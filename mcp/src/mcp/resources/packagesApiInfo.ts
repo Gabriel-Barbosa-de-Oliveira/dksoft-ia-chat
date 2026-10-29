@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-export function registerApiInfoResource(
+export function registerPackageApiInfoResource(
     server: McpServer,
     baseUrl: string
 ){
