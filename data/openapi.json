@@ -1,0 +1,748 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API DKSOFT",
+    "version": "1.0.0",
+    "description": "Gerado a partir de respostas reais. Exemplos com dados pessoais mascarados e arrays limitados a 2 itens."
+  },
+  "servers": [
+    {
+      "url": "https://dkapi.dksoft.com.br"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Erro401": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "mensagem": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "mensagem"
+        ]
+      },
+      "Erro400": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "mensagem": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "codigo",
+          "mensagem"
+        ]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "servico": {
+            "type": "string"
+          },
+          "versao": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "servico",
+          "versao"
+        ]
+      },
+      "PacotesResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "pacotes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id_pacote": {
+                  "type": "integer"
+                },
+                "nome": {
+                  "type": "string"
+                },
+                "carga_horaria": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "modulos": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id_modulo": {
+                        "type": "integer"
+                      },
+                      "nome": {
+                        "type": "string"
+                      },
+                      "sequencia": {
+                        "type": "integer"
+                      },
+                      "carga_horaria": {
+                        "type": "integer",
+                        "nullable": true
+                      }
+                    },
+                    "required": [
+                      "id_modulo",
+                      "nome",
+                      "sequencia"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id_pacote",
+                "nome",
+                "modulos"
+              ]
+            }
+          }
+        },
+        "required": [
+          "status",
+          "total",
+          "pacotes"
+        ]
+      },
+      "ContasRecebidasResponse": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string"
+          },
+          "data_inicial": {
+            "type": "string"
+          },
+          "data_final": {
+            "type": "string"
+          },
+          "total_registros": {
+            "type": "integer"
+          },
+          "registros": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id_aluno": {
+                  "type": "integer"
+                },
+                "id_aluno_curso": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "numero_lancamento": {
+                  "type": "integer"
+                },
+                "vencimento": {
+                  "type": "string"
+                },
+                "data_pagamento": {
+                  "type": "string"
+                },
+                "valor_pago": {
+                  "type": "number"
+                },
+                "historico": {
+                  "type": "string"
+                },
+                "aluno": {
+                  "type": "string"
+                },
+                "responsavel": {
+                  "type": "string"
+                },
+                "banco": {
+                  "type": "string"
+                },
+                "subconta": {
+                  "type": "string"
+                },
+                "conta": {
+                  "type": "string"
+                },
+                "pacote": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "pag_nome": {
+                  "type": "string"
+                },
+                "centro_custo": {
+                  "type": "null",
+                  "nullable": true
+                },
+                "banco_caixa": {
+                  "type": "string"
+                },
+                "hora": {
+                  "type": "string"
+                },
+                "aluno_situacao": {
+                  "type": "string"
+                },
+                "situacao_personalizada": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "situacao_curso": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id_aluno",
+                "numero_lancamento",
+                "vencimento",
+                "data_pagamento",
+                "valor_pago",
+                "historico",
+                "aluno",
+                "responsavel",
+                "banco",
+                "subconta",
+                "conta",
+                "pag_nome",
+                "banco_caixa",
+                "hora",
+                "aluno_situacao"
+              ]
+            }
+          }
+        },
+        "required": [
+          "tipo",
+          "data_inicial",
+          "data_final",
+          "total_registros",
+          "registros"
+        ]
+      },
+      "ContasPagasResponse": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string"
+          },
+          "data_inicial": {
+            "type": "string"
+          },
+          "data_final": {
+            "type": "string"
+          },
+          "total_registros": {
+            "type": "integer"
+          },
+          "registros": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id_aluno": {
+                  "type": "integer"
+                },
+                "id_aluno_curso": {
+                  "type": "null",
+                  "nullable": true
+                },
+                "numero_lancamento": {
+                  "type": "integer"
+                },
+                "vencimento": {
+                  "type": "string"
+                },
+                "data_pagamento": {
+                  "type": "string"
+                },
+                "valor_pago": {
+                  "type": "number"
+                },
+                "historico": {
+                  "type": "string"
+                },
+                "aluno": {
+                  "type": "string"
+                },
+                "responsavel": {
+                  "type": "string"
+                },
+                "banco": {
+                  "type": "string"
+                },
+                "subconta": {
+                  "type": "string"
+                },
+                "conta": {
+                  "type": "string"
+                },
+                "pacote": {
+                  "type": "null",
+                  "nullable": true
+                },
+                "pag_nome": {
+                  "type": "string"
+                },
+                "centro_custo": {
+                  "type": "string"
+                },
+                "banco_caixa": {
+                  "type": "string"
+                },
+                "hora": {
+                  "type": "string"
+                },
+                "aluno_situacao": {
+                  "type": "string"
+                },
+                "situacao_personalizada": {
+                  "type": "null",
+                  "nullable": true
+                },
+                "situacao_curso": {
+                  "type": "null",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id_aluno",
+                "numero_lancamento",
+                "vencimento",
+                "data_pagamento",
+                "valor_pago",
+                "historico",
+                "aluno",
+                "responsavel",
+                "banco",
+                "subconta",
+                "conta",
+                "pag_nome",
+                "centro_custo",
+                "banco_caixa",
+                "hora",
+                "aluno_situacao"
+              ]
+            }
+          }
+        },
+        "required": [
+          "tipo",
+          "data_inicial",
+          "data_final",
+          "total_registros",
+          "registros"
+        ]
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Disponibilidade"
+        ],
+        "summary": "Verifica disponibilidade",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "ok",
+                  "servico": "DKSOFT API",
+                  "versao": "1.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pacotes": {
+      "get": {
+        "tags": [
+          "Pacotes"
+        ],
+        "summary": "Lista pacotes",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacotesResponse"
+                },
+                "example": {
+                  "status": "sucesso",
+                  "total": 95,
+                  "pacotes": [
+                    {
+                      "id_pacote": 98844,
+                      "nome": "EXEMPLO",
+                      "carga_horaria": 238,
+                      "modulos": [
+                        {
+                          "id_modulo": 94789,
+                          "nome": "EXEMPLO",
+                          "sequencia": 2,
+                          "carga_horaria": 140
+                        },
+                        {
+                          "id_modulo": 94793,
+                          "nome": "EXEMPLO",
+                          "sequencia": 3,
+                          "carga_horaria": 98
+                        }
+                      ]
+                    },
+                    {
+                      "id_pacote": 100625,
+                      "nome": "EXEMPLO",
+                      "carga_horaria": 0,
+                      "modulos": []
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro401"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de uso excedido"
+          }
+        }
+      }
+    },
+    "/api/v1/alunos": {
+      "get": {
+        "tags": [
+          "Alunos"
+        ],
+        "summary": "Lista alunos",
+        "parameters": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Resposta 400 durante o mapeamento",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "erro",
+                  "mensagem": "Informe data_inicial no formato YYYY-MM-DD."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro401"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de uso excedido"
+          }
+        }
+      }
+    },
+    "/api/v1/financeiro/contas-recebidas": {
+      "get": {
+        "tags": [
+          "Financeiro"
+        ],
+        "summary": "Contas recebidas (máx. 30 dias)",
+        "parameters": [
+          {
+            "name": "data_inicial",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "data_final",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContasRecebidasResponse"
+                },
+                "example": {
+                  "tipo": "contas_recebidas",
+                  "data_inicial": "2026-09-30",
+                  "data_final": "2026-10-29",
+                  "total_registros": 13,
+                  "registros": [
+                    {
+                      "id_aluno": 1042,
+                      "id_aluno_curso": 1833,
+                      "numero_lancamento": 1910,
+                      "vencimento": "2026-07-28",
+                      "data_pagamento": "2026-10-15",
+                      "valor_pago": 10.38,
+                      "historico": "EXEMPLO",
+                      "aluno": "EXEMPLO",
+                      "responsavel": "EXEMPLO",
+                      "banco": "CAIXA DA ESCOLA",
+                      "subconta": "ENTRADA",
+                      "conta": "ALUNO",
+                      "pacote": "A",
+                      "pag_nome": "EXEMPLO",
+                      "centro_custo": null,
+                      "banco_caixa": "S",
+                      "hora": "15:53",
+                      "aluno_situacao": "A",
+                      "situacao_personalizada": null,
+                      "situacao_curso": "Concluído"
+                    },
+                    {
+                      "id_aluno": 1042,
+                      "id_aluno_curso": 1833,
+                      "numero_lancamento": 1911,
+                      "vencimento": "2026-07-28",
+                      "data_pagamento": "2026-10-15",
+                      "valor_pago": 10.38,
+                      "historico": "EXEMPLO",
+                      "aluno": "EXEMPLO",
+                      "responsavel": "EXEMPLO",
+                      "banco": "CAIXA DA ESCOLA",
+                      "subconta": "MENSALIDADE",
+                      "conta": "ALUNO",
+                      "pacote": "A",
+                      "pag_nome": "EXEMPLO",
+                      "centro_custo": null,
+                      "banco_caixa": "S",
+                      "hora": "15:53",
+                      "aluno_situacao": "A",
+                      "situacao_personalizada": null,
+                      "situacao_curso": "Concluído"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos ou período > 30 dias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro401"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de uso excedido"
+          }
+        }
+      }
+    },
+    "/api/v1/financeiro/contas-pagas": {
+      "get": {
+        "tags": [
+          "Financeiro"
+        ],
+        "summary": "Contas pagas (máx. 30 dias)",
+        "parameters": [
+          {
+            "name": "data_inicial",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "data_final",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContasPagasResponse"
+                },
+                "example": {
+                  "tipo": "contas_pagas",
+                  "data_inicial": "2026-09-30",
+                  "data_final": "2026-10-29",
+                  "total_registros": 2,
+                  "registros": [
+                    {
+                      "id_aluno": 1028,
+                      "id_aluno_curso": null,
+                      "numero_lancamento": 2029,
+                      "vencimento": "2026-10-05",
+                      "data_pagamento": "2026-10-04",
+                      "valor_pago": 0.15,
+                      "historico": "EXEMPLO",
+                      "aluno": "EXEMPLO",
+                      "responsavel": "EXEMPLO",
+                      "banco": "CEF",
+                      "subconta": "13º SALÁRIO",
+                      "conta": "FUNCIONÁRIOS",
+                      "pacote": null,
+                      "pag_nome": "EXEMPLO",
+                      "centro_custo": "1 - DIRETORIA",
+                      "banco_caixa": "N",
+                      "hora": "09:14",
+                      "aluno_situacao": "A",
+                      "situacao_personalizada": null,
+                      "situacao_curso": null
+                    },
+                    {
+                      "id_aluno": 1028,
+                      "id_aluno_curso": null,
+                      "numero_lancamento": 2039,
+                      "vencimento": "2026-10-13",
+                      "data_pagamento": "2026-10-10",
+                      "valor_pago": 0.5,
+                      "historico": "EXEMPLO",
+                      "aluno": "EXEMPLO",
+                      "responsavel": "EXEMPLO",
+                      "banco": "CEF",
+                      "subconta": "13º SALÁRIO",
+                      "conta": "FUNCIONÁRIOS",
+                      "pacote": null,
+                      "pag_nome": "EXEMPLO",
+                      "centro_custo": "1 - DIRETORIA",
+                      "banco_caixa": "N",
+                      "hora": "09:04",
+                      "aluno_situacao": "A",
+                      "situacao_personalizada": null,
+                      "situacao_curso": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos ou período > 30 dias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente ou inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro401"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Limite de uso excedido"
+          }
+        }
+      }
+    }
+  }
+}
