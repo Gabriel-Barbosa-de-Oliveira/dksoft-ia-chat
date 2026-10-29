@@ -1,4 +1,4 @@
-import z from "zod";
+import { type PackagesResponse } from "../domain/package.ts";
 import { PackageHttpClient } from "../infrastructure/packageHttpClient.ts";
 
 
@@ -8,7 +8,7 @@ export class PackageService {
         this.client = new PackageHttpClient(baseUrl)
     }
 
-    async listPackages(): Promise<any> {
+    async listPackages(): Promise<PackagesResponse> {
         return await this.client.listPackages()
     }
 }

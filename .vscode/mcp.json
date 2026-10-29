@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "dksoft-mcp": {
+      "type": "stdio",
+      "command": "${userHome}/.nvm/versions/node/v24.22.1/bin/node",
+      "args": ["--experimental-strip-types", "${workspaceFolder}/mcp/src/index.ts"],
+      "envFile": "${workspaceFolder}/mcp/.env"
+    }
+  }
+}

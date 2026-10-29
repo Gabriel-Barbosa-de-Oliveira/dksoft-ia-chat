@@ -4,7 +4,7 @@ import { server } from "./mcp/server.ts";
 async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("Customers MCP Server running on stdio");
+    console.error("Packages MCP Server running on stdio");
 }
 
 main().catch((error) => {

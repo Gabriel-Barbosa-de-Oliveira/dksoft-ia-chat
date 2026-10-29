@@ -5,28 +5,27 @@ export function registerApiInfoResource(
     baseUrl: string
 ){
     server.registerResource(
-        "customers://api-info",
-        "customers://api-info",
+        "packages://api-info",
+        "packages://api-info",
         {
-            description: "describes the customers rest API that this MCP server wraps"
+            description: "describes the packages rest API that this MCP server wraps"
         },
         () => ({
             contents: [
                 {
-                    uri: "customers://api-info",
+                    uri: "packages://api-info",
                     mimeType: "text/plain",
                     text: `
-Customers API
+Packages API
 
   Base URL : ${baseUrl}
+  Auth     : Bearer token
   Endpoints:
-    GET    /customers          — list all customers
-    GET    /customers/:id      — get customer by id
-    POST   /customers          — create customer  { name, phone }
-    PUT    /customers/:id      — update customer  { name, phone }
-    DELETE /customers/:id      — delete customer
+    GET    /pacotes            — list all packages
 
-  Customer shape: { _id: string, name: string, phone: string }
+  Response shape: { status: string, total: number, pacotes: Package[] }
+  Package shape : { id_pacote: number, nome: string, carga_horaria?: number | null, modulos: Module[] }
+  Module shape  : { id_modulo: number, nome: string, sequencia: number, carga_horaria?: number | null }
 `
                 }
             ]
