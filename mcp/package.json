@@ -1,13 +1,13 @@
 {
   "name": "dksoft-mcp",
   "version": "0.0.1",
-  "description": "MCP server that exposes a customer CRUD API as tools for use with GitHub Copilot and other MCP-compatible agents",
+  "description": "MCP server that exposes the packages API as tools for use with GitHub Copilot and other MCP-compatible agents",
   "main": "src/index.ts",
   "scripts": {
     "start": "node src/index.ts",
     "start:dev": "node --env-file .env --watch --inspect --experimental-strip-types src/index.ts",
     "test": "node --test tests/**/*.test.ts",
-    "mcp:inspect": "npx @modelcontextprotocol/inspector node src/index.ts",
+    "mcp:inspect": "npx @modelcontextprotocol/inspector node --env-file .env src/index.ts",
     "test:dev": "node --inspect --test --watch tests/**/*.test.ts"
   },
   "keywords": [],

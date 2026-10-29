@@ -1,4 +1,4 @@
-import { type Package } from "../domain/package.ts";
+import { type PackagesResponse } from "../domain/package.ts";
 import { withBearerToken, type FetchFn } from "./authInterceptor.ts";
 
 export class PackageHttpClient {
@@ -10,8 +10,8 @@ export class PackageHttpClient {
     }
 
 
-    async listPackages(): Promise<any> {
+    async listPackages(): Promise<PackagesResponse> {
         const res = await this.fetch(`${this.baseUrl}/pacotes`)
-        return res.json() as Promise<Package[]>
+        return res.json() as Promise<PackagesResponse>
     }
 }
