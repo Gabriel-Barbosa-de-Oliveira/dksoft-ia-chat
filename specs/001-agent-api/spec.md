@@ -96,6 +96,7 @@ Quando o modelo principal está indisponível ou lento, o sistema tenta de novo 
 - A API DKSOFT fica fora do ar: o assistente informa que não conseguiu consultar os dados agora, sem responder de memória.
 - Muitas consultas na mesma pergunta: o assistente respeita o limite de requisições simultâneas e por minuto da API, esperando em vez de falhar.
 - Pedidos para alterar dados (cadastrar, baixar parcela): o assistente explica que só consulta, não altera.
+- Resultado com milhares de registros (um mês movimentado): o assistente informa o total e a soma corretos, mostra só uma parte dos registros e diz que a lista está incompleta.
 
 ## Requirements *(mandatory)*
 
@@ -121,6 +122,7 @@ Quando o modelo principal está indisponível ou lento, o sistema tenta de novo 
 - **FR-018**: O sistema MUST registrar cada pergunta com identificador de requisição, duração, resultado (sucesso, erro ou tempo esgotado) e modelo usado, sem registrar o conteúdo da pergunta nem dados pessoais.
 - **FR-019**: O sistema MUST permitir listar as conversas existentes e ler o histórico de uma conversa.
 - **FR-020**: O sistema MUST expor o identificador de requisição em toda resposta, inclusive nas de erro, para facilitar suporte.
+- **FR-021**: O sistema MUST apresentar totais, contagens e somas de valores exatos, calculados diretamente sobre os registros devolvidos pela API (nunca estimados), e MUST informar com clareza quando mostrar apenas parte de um resultado grande.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -148,7 +150,7 @@ Quando o modelo principal está indisponível ou lento, o sistema tenta de novo 
 - Usuários: gestores de escola e funcionários da DKSOFT usam o mesmo chat; nesta fase não há perfis diferentes.
 - Há um único token da API DKSOFT, configurado no servidor; multi-cliente, cofre de tokens e cotas por cliente ficam para specs futuras (constitution, princípio IX).
 - O acesso ao chat usa uma chave de acesso única, configurada no servidor, e não há login por usuário nesta fase.
-- A API DKSOFT é somente leitura; as consultas já disponíveis no MCP existente (`mcp/`) são a fonte de dados e não mudam nesta spec.
+- A API DKSOFT é somente leitura; as consultas já disponíveis no MCP existente (`mcp/`) são a fonte de dados e o contrato delas não muda nesta spec. O `mcp/` recebe apenas correções de robustez necessárias aqui: informar corretamente os erros da API (limite de uso, token inválido) e respeitar o período máximo de 30 dias contando as duas datas.
 - O provedor de modelo é o OpenRouter, com um modelo principal e um de reserva configuráveis.
 - As conversas ficam guardadas até serem removidas manualmente; remoção por política de retenção fica para depois.
 - A memória de longo prazo por usuário (fatos aprendidos entre conversas) está fora desta spec; vale só o histórico de cada conversa.

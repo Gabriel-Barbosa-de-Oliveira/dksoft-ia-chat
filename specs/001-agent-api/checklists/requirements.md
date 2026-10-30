@@ -34,3 +34,4 @@
 - A spec cita a API DKSOFT, o MCP existente (`mcp/`) e o OpenRouter porque são dependências de negócio já definidas, não decisões de implementação. Escolhas de framework, banco e protocolo de streaming ficam para `/speckit-plan`.
 - O limite de 90 dias (FR-015) é um padrão assumido do MVP, registrado em Assumptions.
 - Itens fora do escopo (front, gráficos, voz, multi-tenant, memória de longo prazo) estão em Assumptions e viram specs próprias.
+- Emenda de 2026-10-30 (achados do `/speckit-plan`, ver `research.md` itens 6 e 9): novo FR-021 (totais exatos e aviso de resultado parcial), novo caso de borda de resultado muito grande e ajuste da premissa sobre o `mcp/`. Revalidado: nenhum marcador de clarificação, requisitos testáveis, sem detalhes de implementação.
