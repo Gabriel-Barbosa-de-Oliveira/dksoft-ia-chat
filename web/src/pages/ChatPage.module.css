@@ -4,3 +4,13 @@
   flex: 1;
   flex-direction: column;
 }
+
+.loading {
+  flex: 1;
+  padding: var(--space-4);
+}
+
+.notice {
+  flex: 1;
+  padding: var(--space-4);
+}

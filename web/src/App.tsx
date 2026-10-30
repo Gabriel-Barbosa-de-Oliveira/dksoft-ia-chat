@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { BrowserRouter, Route, Routes } from "react-router";
 import { createApiClient } from "./api/client.ts";
 import { AccessGate } from "./components/AccessGate.tsx";
-import { AppShell } from "./components/AppShell.tsx";
+import { AnnouncerProvider } from "./components/LiveRegion.tsx";
 import { useAccessKey } from "./hooks/useAccessKey.ts";
 import { ChatPage } from "./pages/ChatPage.tsx";
 import type { AccessKeyStore } from "./storage/access-key.ts";
@@ -32,13 +32,12 @@ export function App({ services }: { services: AppServices }) {
   }
 
   return (
-    <BrowserRouter>
-      <AppShell onSignOut={access.signOut}>
+    <AnnouncerProvider>
+      <BrowserRouter>
         <Routes>
-          <Route path="/" element={<ChatPage client={client} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<ChatPage client={client} onSignOut={access.signOut} />} />
         </Routes>
-      </AppShell>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AnnouncerProvider>
   );
 }

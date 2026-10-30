@@ -41,11 +41,12 @@ export function useChat(options: { client: ApiClient; onConversation?: (conversa
         cancelSchedule: (handle) => cancelAnimationFrame(handle as number),
         announcer,
         signal: controller.signal,
-      }).then((result) => {
+        onMeta: (id) => {
+          // Um turno já interrompido (troca de conversa) não pode puxar a navegação de volta.
+          if (!controller.signal.aborted && id !== current.conversationId) onConversationRef.current?.(id);
+        },
+      }).then(() => {
         if (abortRef.current === controller) abortRef.current = null;
-        if (result.conversationId && result.conversationId !== current.conversationId) {
-          onConversationRef.current?.(result.conversationId);
-        }
       });
     },
     [client, announcer],

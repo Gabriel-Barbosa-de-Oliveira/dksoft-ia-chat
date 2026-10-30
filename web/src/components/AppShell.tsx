@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
-import { AnnouncerProvider } from "./LiveRegion.tsx";
 import styles from "./AppShell.module.css";
 
 export interface AppShellProps {
@@ -15,8 +14,7 @@ export const MAIN_ID = "conversa";
 
 export function AppShell({ children, aside, tools, onSignOut }: AppShellProps) {
   return (
-    <AnnouncerProvider>
-      <div className={styles.shell}>
+    <div className={styles.shell}>
         <a href={`#${MAIN_ID}`} className="skip-link">
           Pular para a conversa
         </a>
@@ -41,7 +39,6 @@ export function AppShell({ children, aside, tools, onSignOut }: AppShellProps) {
             {children}
           </main>
         </div>
-      </div>
-    </AnnouncerProvider>
+    </div>
   );
 }

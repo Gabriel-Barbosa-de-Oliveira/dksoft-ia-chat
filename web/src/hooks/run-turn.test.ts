@@ -132,3 +132,17 @@ test("fluxo que acaba sem terminal e sem abort vira connection_lost", async () =
   const error = s.actions.at(-1);
   assert.ok(error && error.type === "ERROR" && error.error.kind === "connection_lost");
 });
+
+test("onMeta é chamado com o id da conversa assim que o meta chega", async () => {
+  const s = setup();
+  const seen: string[] = [];
+  const order: string[] = [];
+  await runTurn({
+    ...s.deps,
+    dispatch: (a) => void order.push(a.type),
+    onMeta: (id) => void (seen.push(id), order.push("onMeta")),
+    stream: from([meta, token("a"), done()]),
+  });
+  assert.deepEqual(seen, ["c1"]);
+  assert.deepEqual(order.slice(0, 2), ["META", "onMeta"]);
+});

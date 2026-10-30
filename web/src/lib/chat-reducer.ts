@@ -1,4 +1,5 @@
 import type { UserError } from "./errors.ts";
+import type { ChatMessage } from "./events.ts";
 
 export type TurnStatus = "pending" | "working" | "streaming" | "done" | "error" | "interrupted";
 export type ToolPhase = "running" | "ok" | "failed";
@@ -39,7 +40,11 @@ export type ChatAction =
   | { type: "DONE"; requestId: string; model: string | null; partial: boolean }
   | { type: "ERROR"; error: UserError }
   | { type: "ABORT" }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "LOAD_START"; conversationId: string }
+  | { type: "LOAD_OK"; conversationId: string; messages: readonly ChatMessage[] }
+  | { type: "LOAD_ERROR"; conversationId: string; error: UserError }
+  | { type: "LOAD_NOT_FOUND"; conversationId: string | null };
 
 export const initialView: ConversationView = {
   conversationId: null,
@@ -84,6 +89,29 @@ function closeTool(tools: ToolNotice[], name: string, label: string, ok: boolean
   const index = tools.findIndex((t) => t.name === name && t.phase === "running");
   if (index === -1) return [...tools, { name, label, phase }];
   return tools.map((t, i) => (i === index ? { ...t, label, phase } : t));
+}
+
+/** Cada par `user` + `assistant` vira um turno concluído; `user` solto vira turno de texto vazio. */
+export function messagesToTurns(messages: readonly ChatMessage[]): Turn[] {
+  const turns: Turn[] = [];
+  let pending: ChatMessage | null = null;
+  const push = (user: ChatMessage, assistant: ChatMessage | null) =>
+    turns.push({
+      ...newTurn(user.content, `h-${user.id}`),
+      status: "done",
+      text: assistant?.content ?? "",
+    });
+  for (const message of messages) {
+    if (message.role === "user") {
+      if (pending) push(pending, null);
+      pending = message;
+    } else if (pending) {
+      push(pending, message);
+      pending = null;
+    }
+  }
+  if (pending) push(pending, null);
+  return turns;
 }
 
 export function chatReducer(view: ConversationView, action: ChatAction): ConversationView {
@@ -139,5 +167,17 @@ export function chatReducer(view: ConversationView, action: ChatAction): Convers
       }));
     case "RESET":
       return initialView;
+    case "LOAD_START":
+      return { conversationId: action.conversationId, phase: "loading", turns: [], loadError: null };
+    case "LOAD_OK": {
+      if (view.conversationId !== action.conversationId) return view; // carga de outra conversa, atrasada
+      const turns = messagesToTurns(action.messages);
+      return { ...view, phase: turns.length > 0 ? "ready" : "empty", turns, loadError: null };
+    }
+    case "LOAD_ERROR":
+      if (view.conversationId !== action.conversationId) return view;
+      return { ...view, phase: "error", turns: [], loadError: action.error };
+    case "LOAD_NOT_FOUND":
+      return { conversationId: action.conversationId, phase: "not-found", turns: [], loadError: null };
   }
 }

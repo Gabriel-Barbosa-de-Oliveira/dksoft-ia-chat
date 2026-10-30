@@ -12,6 +12,8 @@ export interface RunTurnDeps {
   schedule: (fn: () => void) => unknown;
   cancelSchedule: (handle: unknown) => void;
   announcer: Announcer;
+  /** Chamado quando o `meta` chega (por exemplo, para navegar até a conversa nova). */
+  onMeta?: (conversationId: string) => void;
   /** Sinal do "Parar": permite distinguir interrupção de queda de conexão. */
   signal?: AbortSignal;
 }
@@ -26,7 +28,7 @@ function errorText(title: string, message: string): string {
 
 /** Consome o fluxo de eventos e o traduz em ações do reducer, em lote para os tokens. Não é React. */
 export async function runTurn(deps: RunTurnDeps): Promise<RunTurnResult> {
-  const { stream, dispatch, schedule, cancelSchedule, announcer, signal } = deps;
+  const { stream, dispatch, schedule, cancelSchedule, announcer, signal, onMeta } = deps;
   const buffer = createTokenBuffer();
   let handle: unknown = null;
   let conversationId: string | null = null;
@@ -54,6 +56,7 @@ export async function runTurn(deps: RunTurnDeps): Promise<RunTurnResult> {
         case "meta":
           conversationId = event.conversationId;
           dispatch({ type: "META", requestId: event.requestId, conversationId: event.conversationId });
+          onMeta?.(event.conversationId);
           break;
         case "tool":
           flush();

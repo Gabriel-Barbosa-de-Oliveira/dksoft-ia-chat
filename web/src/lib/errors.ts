@@ -29,7 +29,7 @@ export interface UserError {
 export type ErrorInput =
   | { source: "http"; status: number; body: ApiErrorBody | null }
   | { source: "stream"; code: StreamErrorCode; requestId: string | null }
-  | { source: "client"; kind: "connection_lost" | "client_timeout" | "unexpected_response"; requestId?: string | null }
+  | { source: "client"; kind: "connection_lost" | "client_timeout" | "unexpected_response" | "conversation_not_found"; requestId?: string | null }
   | { source: "network" };
 
 export type ErrorContext = "gate" | "session";

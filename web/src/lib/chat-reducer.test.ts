@@ -110,3 +110,63 @@ test("tokens vazios são ignorados", () => {
   const v = run([send, meta]);
   assert.equal(run([{ type: "TOKENS", text: "" }], v), v);
 });
+
+// ---------- histórico (US2) ----------
+import { messagesToTurns } from "./chat-reducer.ts";
+import type { ChatMessage } from "./events.ts";
+
+const msg = (id: number, role: "user" | "assistant", content: string): ChatMessage => ({ id, role, content, createdAt: "2026-10-30T12:00:00.000Z" });
+
+test("messagesToTurns: pares em ordem", () => {
+  const turns = messagesToTurns([msg(1, "user", "a"), msg(2, "assistant", "A"), msg(3, "user", "b"), msg(4, "assistant", "B")]);
+  assert.deepEqual(turns.map((t) => [t.question, t.text, t.status, t.partial]), [["a", "A", "done", false], ["b", "B", "done", false]]);
+  assert.deepEqual(turns.map((t) => t.key), ["h-1", "h-3"]);
+  assert.deepEqual(turns[0]!.tools, []);
+});
+
+test("messagesToTurns: mensagem user solta vira turno de texto vazio e não quebra", () => {
+  const turns = messagesToTurns([msg(1, "user", "a"), msg(2, "user", "b"), msg(3, "assistant", "B")]);
+  assert.deepEqual(turns.map((t) => [t.question, t.text]), [["a", ""], ["b", "B"]]);
+  assert.deepEqual(messagesToTurns([msg(1, "user", "a")]).map((t) => t.text), [""]);
+  assert.deepEqual(messagesToTurns([]), []);
+});
+
+test("carga: loading → ready", () => {
+  let v = run([{ type: "LOAD_START", conversationId: "c1" }]);
+  assert.equal(v.phase, "loading");
+  assert.equal(v.conversationId, "c1");
+  v = run([{ type: "LOAD_OK", conversationId: "c1", messages: [msg(1, "user", "a"), msg(2, "assistant", "A")] }], v);
+  assert.equal(v.phase, "ready");
+  assert.equal(v.turns.length, 1);
+});
+
+test("carga sem mensagens vira empty", () => {
+  const v = run([{ type: "LOAD_START", conversationId: "c1" }, { type: "LOAD_OK", conversationId: "c1", messages: [] }]);
+  assert.equal(v.phase, "empty");
+});
+
+test("carga de outra conversa, atrasada, é descartada", () => {
+  const v = run([{ type: "LOAD_START", conversationId: "b" }]);
+  assert.equal(run([{ type: "LOAD_OK", conversationId: "a", messages: [msg(1, "user", "x")] }], v), v);
+  assert.equal(run([{ type: "LOAD_ERROR", conversationId: "a", error: toUserError({ source: "network" }) }], v), v);
+});
+
+test("erro de carga fica isolado e mantém o id", () => {
+  const error = toUserError({ source: "network" });
+  const v = run([{ type: "LOAD_START", conversationId: "c1" }, { type: "LOAD_ERROR", conversationId: "c1", error }]);
+  assert.equal(v.phase, "error");
+  assert.equal(v.loadError, error);
+  assert.equal(v.conversationId, "c1");
+});
+
+test("conversa não encontrada bloqueia o envio", () => {
+  const v = run([{ type: "LOAD_NOT_FOUND", conversationId: "x" }]);
+  assert.equal(v.phase, "not-found");
+  assert.equal(run([send], v), v);
+});
+
+test("SEND durante a carga é ignorado; RESET volta ao vazio", () => {
+  const loading = run([{ type: "LOAD_START", conversationId: "c1" }]);
+  assert.equal(run([send], loading), loading);
+  assert.equal(run([{ type: "RESET" }], loading), initialView);
+});
