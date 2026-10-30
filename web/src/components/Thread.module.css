@@ -1,0 +1,39 @@
+.root {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+}
+
+.scroller {
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+}
+
+.column {
+  display: flex;
+  max-width: var(--width-content);
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-inline: auto;
+}
+
+.follow {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-4);
+  gap: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 47.4375rem) {
+  .scroller {
+    padding-inline: var(--space-4);
+  }
+
+  .follow {
+    right: var(--space-4);
+  }
+}

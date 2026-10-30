@@ -160,7 +160,7 @@ export type StudentsQuery = z.infer<typeof StudentsQuerySchema>
 
 export const StudentsFilterSchema = StudentsQuerySchema.extend({
     nome: z.string().optional().describe("Name (or part of the name) of the student, filtered on the returned page"),
-    situacao: z.string().optional().describe("Status of the student, filtered on the returned page"),
+    situacao: z.string().optional().describe("Status code of the student, filtered on the returned page: A (ativo), I (inativo) or F (meaning not documented)"),
 })
 export type StudentsFilter = z.infer<typeof StudentsFilterSchema>
 
@@ -188,12 +188,25 @@ function includesIgnoreCase(value: string | null | undefined, search: string): b
     return (value ?? "").toLowerCase().includes(search.toLowerCase())
 }
 
+// the API returns situacao as a code, but agents usually ask for the word
+function situacaoCode(search: string): string | undefined {
+    const word = search.trim()
+    if (/^inativ[oa]s?$/i.test(word)) return "I"
+    if (/^ativ[oa]s?$/i.test(word)) return "A"
+    return undefined
+}
+
+function matchesSituacao(value: string | null | undefined, search: string): boolean {
+    const code = situacaoCode(search)
+    return code ? value?.toUpperCase() === code : includesIgnoreCase(value, search)
+}
+
 export function filterStudents(
     students: Student[],
     { nome, situacao }: Pick<StudentsFilter, "nome" | "situacao">
 ): Student[] {
     return students.filter(student =>
         (!nome || includesIgnoreCase(student.nome, nome) || includesIgnoreCase(student.nome_social, nome)) &&
-        (!situacao || includesIgnoreCase(student.situacao, situacao))
+        (!situacao || matchesSituacao(student.situacao, situacao))
     )
 }

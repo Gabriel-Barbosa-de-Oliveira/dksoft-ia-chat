@@ -69,6 +69,7 @@ web_modules/
 .env
 .env.*
 !.env.example
+!.env.e2e
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -147,3 +148,14 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# api
+api/data/
+*.db
+*.db-wal
+*.db-shm
+
+# web
+web/dist/
+web/dist-e2e/
+web/test-results/

@@ -7,18 +7,18 @@ export const ReceivableAccountSchema = z.object({
     vencimento: z.string().describe("Due date (YYYY-MM-DD)"),
     data_pagamento: z.string().describe("Payment date (YYYY-MM-DD)"),
     valor_pago: z.number().describe("Amount paid"),
-    historico: z.string().describe("Entry description"),
-    aluno: z.string().describe("Name of the student"),
-    responsavel: z.string().describe("Name of the student's guardian"),
-    banco: z.string().describe("Bank or cash register that received the payment"),
-    subconta: z.string().describe("Sub-account of the entry"),
-    conta: z.string().describe("Account of the entry"),
+    historico: z.string().nullable().describe("Entry description"),
+    aluno: z.string().nullable().describe("Name of the student"),
+    responsavel: z.string().nullable().describe("Name of the student's guardian"),
+    banco: z.string().nullable().describe("Bank or cash register that received the payment"),
+    subconta: z.string().nullable().describe("Sub-account of the entry"),
+    conta: z.string().nullable().describe("Account of the entry"),
     pacote: z.string().nullable().optional().describe("Name of the package"),
-    pag_nome: z.string().describe("Name of the payer"),
-    centro_custo: z.null().optional().describe("Cost center"),
-    banco_caixa: z.string().describe("Indicates if the bank is a cash register (S/N)"),
-    hora: z.string().describe("Payment time (HH:mm)"),
-    aluno_situacao: z.string().describe("Status of the student"),
+    pag_nome: z.string().nullable().describe("Name of the payer"),
+    centro_custo: z.string().nullable().optional().describe("Cost center"),
+    banco_caixa: z.string().nullable().describe("Indicates if the bank is a cash register (S/N)"),
+    hora: z.string().nullable().describe("Payment time (HH:mm)"),
+    aluno_situacao: z.string().nullable().describe("Status of the student"),
     situacao_personalizada: z.string().nullable().optional().describe("Custom status of the student"),
     situacao_curso: z.string().nullable().optional().describe("Status of the student's course"),
 })
@@ -75,7 +75,7 @@ export function validateReceivablePeriod(dataInicial: string, dataFinal: string)
     if (end < start) {
         return `Invalid period: data_final (${dataFinal}) must be on or after data_inicial (${dataInicial}).`
     }
-    if ((end - start) / DAY_IN_MS > MAX_RECEIVABLE_PERIOD_DAYS) {
-        return `It is not possible to search received accounts for the period from ${dataInicial} to ${dataFinal}. The period must be at most ${MAX_RECEIVABLE_PERIOD_DAYS} days.`
+    if ((end - start) / DAY_IN_MS + 1 > MAX_RECEIVABLE_PERIOD_DAYS) {
+        return `It is not possible to search received accounts for the period from ${dataInicial} to ${dataFinal}. The period must be at most ${MAX_RECEIVABLE_PERIOD_DAYS} days, counting both dates.`
     }
 }

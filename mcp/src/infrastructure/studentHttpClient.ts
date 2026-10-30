@@ -1,4 +1,12 @@
+import type z from "zod";
 import {
+    StudentAttendanceResponseSchema,
+    StudentCoursesResponseSchema,
+    StudentDetailResponseSchema,
+    StudentExamsResponseSchema,
+    StudentOpenInstallmentsResponseSchema,
+    StudentsByPhoneResponseSchema,
+    StudentsResponseSchema,
     type StudentAttendanceResponse,
     type StudentCoursesResponse,
     type StudentDetailResponse,
@@ -9,6 +17,7 @@ import {
     type StudentsQuery,
     type StudentsResponse,
 } from "../domain/student.ts";
+import { assertOk, parseResponse } from "./apiHttpError.ts";
 import { withBearerToken, type FetchFn } from "./authInterceptor.ts";
 
 export class StudentHttpClient {
@@ -27,46 +36,38 @@ export class StudentHttpClient {
         })
         if (query.limite !== undefined) params.set("limite", String(query.limite))
         if (query.offset !== undefined) params.set("offset", String(query.offset))
-        return this.get<StudentsResponse>(`/alunos?${params}`)
+        return this.get(`/alunos?${params}`, StudentsResponseSchema)
     }
 
     async findStudent(campo: StudentLookupField, valor: string): Promise<StudentDetailResponse> {
-        return this.get<StudentDetailResponse>(`/alunos/${campo}/${encodeURIComponent(valor)}`)
+        return this.get(`/alunos/${campo}/${encodeURIComponent(valor)}`, StudentDetailResponseSchema)
     }
 
     async findStudentsByPhone(telefone: string): Promise<StudentsByPhoneResponse> {
-        return this.get<StudentsByPhoneResponse>(`/alunos/telefone/${encodeURIComponent(telefone)}`)
+        return this.get(`/alunos/telefone/${encodeURIComponent(telefone)}`, StudentsByPhoneResponseSchema)
     }
 
     async listStudentCourses(idAluno: number): Promise<StudentCoursesResponse> {
-        return this.get<StudentCoursesResponse>(`/alunos/id/${idAluno}/cursos`)
+        return this.get(`/alunos/id/${idAluno}/cursos`, StudentCoursesResponseSchema)
     }
 
     async listStudentOpenInstallments(idAluno: number): Promise<StudentOpenInstallmentsResponse> {
-        return this.get<StudentOpenInstallmentsResponse>(`/alunos/id/${idAluno}/parcelas-abertas`)
+        return this.get(`/alunos/id/${idAluno}/parcelas-abertas`, StudentOpenInstallmentsResponseSchema)
     }
 
     async listStudentAttendance(idAluno: number): Promise<StudentAttendanceResponse> {
-        return this.get<StudentAttendanceResponse>(`/alunos/id/${idAluno}/presencas`)
+        return this.get(`/alunos/id/${idAluno}/presencas`, StudentAttendanceResponseSchema)
     }
 
     async listStudentExams(idAluno: number): Promise<StudentExamsResponse> {
-        return this.get<StudentExamsResponse>(`/alunos/id/${idAluno}/provas`)
+        return this.get(`/alunos/id/${idAluno}/provas`, StudentExamsResponseSchema)
     }
 
     // the API answers 404 with an html body when the student does not exist, so the body is only parsed on success
-    private async get<T>(path: string): Promise<T> {
+    private async get<S extends z.ZodTypeAny>(path: string, schema: S): Promise<z.infer<S>> {
         const res = await this.fetch(`${this.baseUrl}${path}`)
-        if (!res.ok) {
-            const body = await res.text()
-            let message = body
-            try {
-                message = (JSON.parse(body) as { mensagem?: string }).mensagem ?? body
-            } catch {
-                // keep the raw body
-            }
-            throw new Error(res.status === 404 ? "Not found (404)" : `HTTP ${res.status}: ${message}`)
-        }
-        return res.json() as Promise<T>
+        if (res.status === 404) throw new Error("Not found (404)")
+        await assertOk(res)
+        return parseResponse(schema, await res.json())
     }
 }
