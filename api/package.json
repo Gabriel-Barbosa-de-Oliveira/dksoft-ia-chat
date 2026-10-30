@@ -1,0 +1,32 @@
+{
+  "name": "dksoft-ia-chat-api",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Backend do agente de chat DKSOFT (Fastify + LangGraph + SSE)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --import tsx src/index.ts",
+    "start": "node --import tsx src/index.ts",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@fastify/rate-limit": "^11.2.1",
+    "@langchain/core": "^1.3.2",
+    "@langchain/langgraph": "^1.5.3",
+    "@langchain/mcp-adapters": "^2.0.1",
+    "@langchain/openai": "^1.8.0",
+    "fastify": "^5.12.7",
+    "langchain": "^1.6.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

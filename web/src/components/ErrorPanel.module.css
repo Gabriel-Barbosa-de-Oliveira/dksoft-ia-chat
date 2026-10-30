@@ -1,0 +1,19 @@
+.support {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.wait {
+  margin: 0;
+  font-weight: 600;
+}

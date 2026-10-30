@@ -1,0 +1,66 @@
+.root {
+  font-size: 1rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.root > :first-child {
+  margin-top: 0;
+}
+.root > :last-child {
+  margin-bottom: 0;
+}
+
+.root h1,
+.root h2,
+.root h3,
+.root h4 {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 1rem;
+}
+
+.root ul,
+.root ol {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-6);
+}
+
+.root code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--color-surface);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.root pre {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: var(--rule-thin) solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.root pre code {
+  padding: 0;
+  background: none;
+}
+
+.root blockquote {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-3);
+  border-left: var(--rule) solid var(--line);
+}
+
+.tableWrap {
+  max-width: 100%;
+  margin: 0 0 var(--space-3);
+  overflow-x: auto;
+}
+
+.tableWrap table {
+  min-width: 100%;
+  width: max-content;
+  overflow-wrap: normal;
+}
