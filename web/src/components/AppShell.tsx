@@ -7,12 +7,14 @@ export interface AppShellProps {
   aside?: ReactNode;
   /** Controles da barra (por exemplo, histórico em tela estreita e tema). */
   tools?: ReactNode;
+  /** Avisos discretos logo abaixo da barra (por exemplo, armazenamento bloqueado). */
+  banner?: ReactNode;
   onSignOut: () => void;
 }
 
 export const MAIN_ID = "conversa";
 
-export function AppShell({ children, aside, tools, onSignOut }: AppShellProps) {
+export function AppShell({ children, aside, tools, banner, onSignOut }: AppShellProps) {
   return (
     <div className={styles.shell}>
         <a href={`#${MAIN_ID}`} className="skip-link">
@@ -28,6 +30,7 @@ export function AppShell({ children, aside, tools, onSignOut }: AppShellProps) {
             </button>
           </div>
         </header>
+        {banner}
         <div className={styles.body}>
           {aside ? (
             <aside className={styles.aside} aria-label="Histórico de conversas">

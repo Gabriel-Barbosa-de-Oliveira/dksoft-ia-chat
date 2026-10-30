@@ -5,14 +5,20 @@ import { AppShell } from "../components/AppShell.tsx";
 import { Composer } from "../components/Composer.tsx";
 import { ConfirmDialog } from "../components/ConfirmDialog.tsx";
 import { ConversationList } from "../components/ConversationList.tsx";
+import { ErrorPanel } from "../components/ErrorPanel.tsx";
 import { EmptyState } from "../components/EmptyState.tsx";
+import { SectionBoundary } from "../components/SectionBoundary.tsx";
 import { Skeleton } from "../components/Skeleton.tsx";
 import { StatusNotice } from "../components/StatusNotice.tsx";
+import { StorageNotice } from "../components/StorageNotice.tsx";
 import { Thread } from "../components/Thread.tsx";
+import { useDraft } from "../hooks/DraftContext.tsx";
 import { useChat } from "../hooks/useChat.ts";
 import { useConversation } from "../hooks/useConversation.ts";
 import { useConversationList } from "../hooks/useConversationList.ts";
 import { useConversationPreview } from "../hooks/useConversationPreview.ts";
+import { useCountdown } from "../hooks/useCountdown.ts";
+import type { Turn } from "../lib/chat-reducer.ts";
 import { toUserError } from "../lib/errors.ts";
 import { conversationPath, parseRoute } from "../lib/route.ts";
 import { isUuid } from "../lib/validation.ts";
@@ -21,9 +27,11 @@ import styles from "./ChatPage.module.css";
 export interface ChatPageProps {
   client: ApiClient;
   onSignOut: () => void;
+  /** `false` quando o navegador bloqueou o armazenamento (aviso discreto). */
+  persisted?: boolean;
 }
 
-export function ChatPage({ client, onSignOut }: ChatPageProps) {
+export function ChatPage({ client, onSignOut, persisted = true }: ChatPageProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const route = useMemo(() => parseRoute(location.pathname), [location.pathname]);
@@ -43,7 +51,7 @@ export function ChatPage({ client, onSignOut }: ChatPageProps) {
   const list = useConversationList(client);
   const previews = useConversationPreview(client);
   const [now] = useState(() => Date.now());
-  const [draft, setDraft] = useState("");
+  const { draft, setDraft, beginSend, endSend } = useDraft();
   const [pendingTarget, setPendingTarget] = useState<string | null | undefined>(undefined);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -77,19 +85,56 @@ export function ChatPage({ client, onSignOut }: ChatPageProps) {
     wasBusy.current = chat.isBusy;
   }, [chat.isBusy, refresh]);
 
+  const { view } = chat;
+  const lastTurn = view.turns.at(-1);
+
+  // Pergunta enviada: sai do campo, mas fica "em voo" até o fim (se a chave for recusada, volta ao campo).
   const send = useCallback(
     (text: string) => {
+      // Reenviar a mesma pergunta que terminou em erro substitui o turno com erro (sem duplicar).
+      if (lastTurn?.status === "error" && lastTurn.question === text) dispatch({ type: "DISCARD_ERROR_TURN", key: lastTurn.key });
       setDraft("");
+      beginSend(text);
       chat.send(text);
       inputRef.current?.focus();
     },
-    [chat],
+    [chat, lastTurn, dispatch, setDraft, beginSend],
   );
 
-  const pick = useCallback((text: string) => {
-    setDraft(text);
-    inputRef.current?.focus();
-  }, []);
+  const retry = useCallback(
+    (turn: Turn) => {
+      dispatch({ type: "DISCARD_ERROR_TURN", key: turn.key });
+      setDraft((current) => (current === turn.question ? "" : current));
+      beginSend(turn.question);
+      chat.send(turn.question);
+      inputRef.current?.focus();
+    },
+    [chat, dispatch, setDraft, beginSend],
+  );
+
+  // Fim do turno: nada mais em voo. Erro: a pergunta volta ao campo (se vazio) para ser revista ou reenviada.
+  const handledError = useRef<string | null>(null);
+  useEffect(() => {
+    if (!chat.isBusy) endSend();
+  }, [chat.isBusy, endSend]);
+  useEffect(() => {
+    if (lastTurn?.status !== "error" || handledError.current === lastTurn.key) return;
+    handledError.current = lastTurn.key;
+    setDraft((current) => (current === "" ? lastTurn.question : current));
+  }, [lastTurn, setDraft]);
+
+  // Limite de uso: envio bloqueado até a contagem zerar.
+  const rateTurn = lastTurn?.status === "error" && lastTurn.error?.kind === "rate_limited" ? lastTurn : null;
+  const remaining = useCountdown(rateTurn?.error?.retryAfterSeconds ?? null, rateTurn?.key ?? null);
+  const blocked = rateTurn !== null && remaining !== null && remaining > 0;
+
+  const pick = useCallback(
+    (text: string) => {
+      setDraft(text);
+      inputRef.current?.focus();
+    },
+    [setDraft],
+  );
 
   const startNew = useCallback(() => {
     shownRef.current = null;
@@ -121,7 +166,6 @@ export function ChatPage({ client, onSignOut }: ChatPageProps) {
     else if (target !== undefined) navigate(conversationPath(target));
   }, [pendingTarget, stop, startNew, navigate]);
 
-  const { view } = chat;
   const notFound = toUserError({ source: "client", kind: "conversation_not_found" });
 
   let content;
@@ -166,7 +210,23 @@ export function ChatPage({ client, onSignOut }: ChatPageProps) {
   } else if (view.turns.length === 0) {
     content = <EmptyState onPick={pick} />;
   } else {
-    content = <Thread turns={view.turns} />;
+    content = (
+      <SectionBoundary>
+        <Thread
+          turns={view.turns}
+          renderError={(turn) =>
+            turn.error ? (
+              <ErrorPanel
+                error={turn.error}
+                onRetry={turn.key === lastTurn?.key ? () => retry(turn) : undefined}
+                onNewConversation={startNew}
+                countdown={turn.key === rateTurn?.key ? remaining : undefined}
+              />
+            ) : null
+          }
+        />
+      </SectionBoundary>
+    );
   }
 
   const canCompose = view.phase !== "not-found" && view.phase !== "loading";
@@ -174,7 +234,9 @@ export function ChatPage({ client, onSignOut }: ChatPageProps) {
   return (
     <AppShell
       onSignOut={onSignOut}
+      banner={<StorageNotice persisted={persisted} />}
       aside={
+        <SectionBoundary>
         <ConversationList
           state={list.state}
           currentId={view.conversationId}
@@ -186,12 +248,22 @@ export function ChatPage({ client, onSignOut }: ChatPageProps) {
           onLoadMore={list.loadMore}
           onRetry={list.reload}
         />
+        </SectionBoundary>
       }
     >
       <div className={styles.page}>
         {content}
         {canCompose ? (
-          <Composer value={draft} onChange={setDraft} onSubmit={send} onStop={chat.stop} busy={chat.isBusy} inputRef={inputRef} />
+          <Composer
+            value={draft}
+            onChange={setDraft}
+            onSubmit={send}
+            onStop={chat.stop}
+            busy={chat.isBusy}
+            blocked={blocked}
+            blockedReason={blocked ? `Aguarde ${remaining} s para enviar de novo.` : undefined}
+            inputRef={inputRef}
+          />
         ) : null}
       </div>
       <ConfirmDialog

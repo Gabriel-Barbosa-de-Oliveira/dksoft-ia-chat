@@ -170,3 +170,28 @@ test("SEND durante a carga é ignorado; RESET volta ao vazio", () => {
   assert.equal(run([send], loading), loading);
   assert.equal(run([{ type: "RESET" }], loading), initialView);
 });
+
+// ---------- nova tentativa (US3) ----------
+test("DISCARD_ERROR_TURN remove só o último turno em erro e permite reenviar a mesma pergunta", () => {
+  const error = toUserError({ source: "network" });
+  let v = run([send, { type: "ERROR", error }]);
+  assert.equal(run([{ type: "DISCARD_ERROR_TURN", key: "outra" }], v), v, "chave diferente: nada muda");
+  v = run([{ type: "DISCARD_ERROR_TURN", key: "k1" }], v);
+  assert.equal(v.turns.length, 0);
+  v = run([{ type: "SEND", question: "Quais pacotes?", key: "k2" }], v);
+  assert.equal(last(v).question, "Quais pacotes?");
+  assert.equal(last(v).status, "pending");
+});
+
+test("DISCARD_ERROR_TURN não toca em turno concluído ou ativo", () => {
+  const active = run([send, meta]);
+  assert.equal(run([{ type: "DISCARD_ERROR_TURN", key: "k1" }], active), active);
+  const done = run([{ type: "DONE", requestId: "r1", model: null, partial: false }], active);
+  assert.equal(run([{ type: "DISCARD_ERROR_TURN", key: "k1" }], done), done);
+});
+
+test("a conversa existente continua a mesma depois de descartar o erro", () => {
+  const error = toUserError({ source: "stream", code: "timeout", requestId: "r1" });
+  const v = run([send, meta, { type: "ERROR", error }, { type: "DISCARD_ERROR_TURN", key: "k1" }]);
+  assert.equal(v.conversationId, "c1");
+});

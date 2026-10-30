@@ -41,6 +41,8 @@ export type ChatAction =
   | { type: "ERROR"; error: UserError }
   | { type: "ABORT" }
   | { type: "RESET" }
+  /** Descarta o último turno quando ele terminou em erro (nova tentativa / reenvio da mesma pergunta). */
+  | { type: "DISCARD_ERROR_TURN"; key: string }
   | { type: "LOAD_START"; conversationId: string }
   | { type: "LOAD_OK"; conversationId: string; messages: readonly ChatMessage[] }
   | { type: "LOAD_ERROR"; conversationId: string; error: UserError }
@@ -167,6 +169,12 @@ export function chatReducer(view: ConversationView, action: ChatAction): Convers
       }));
     case "RESET":
       return initialView;
+    case "DISCARD_ERROR_TURN": {
+      const last = view.turns.at(-1);
+      if (!last || last.key !== action.key || last.status !== "error") return view;
+      const turns = view.turns.slice(0, -1);
+      return { ...view, turns, phase: turns.length > 0 || view.conversationId ? view.phase : "empty" };
+    }
     case "LOAD_START":
       return { conversationId: action.conversationId, phase: "loading", turns: [], loadError: null };
     case "LOAD_OK": {

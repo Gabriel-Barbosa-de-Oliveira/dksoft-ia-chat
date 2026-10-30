@@ -1,0 +1,14 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--rule-thin) dashed var(--color-text);
+  font-size: 0.8125rem;
+}
+
+.icon {
+  flex: none;
+  color: var(--color-icon-alert);
+}

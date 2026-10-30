@@ -7,6 +7,10 @@
   border: var(--rule) solid var(--color-text);
 }
 
+.error {
+  border-style: solid;
+}
+
 .warning {
   border-style: dashed;
 }

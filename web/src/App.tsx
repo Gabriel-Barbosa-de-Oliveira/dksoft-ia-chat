@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { createApiClient } from "./api/client.ts";
 import { AccessGate } from "./components/AccessGate.tsx";
 import { AnnouncerProvider } from "./components/LiveRegion.tsx";
+import { useDraft } from "./hooks/DraftContext.tsx";
 import { useAccessKey } from "./hooks/useAccessKey.ts";
 import { ChatPage } from "./pages/ChatPage.tsx";
 import type { AccessKeyStore } from "./storage/access-key.ts";
@@ -14,8 +15,19 @@ export interface AppServices {
 }
 
 export function App({ services }: { services: AppServices }) {
+  const draft = useDraft();
   const access = useAccessKey({ store: services.accessKeyStore, baseUrl: services.baseUrl, fetch: services.fetch });
-  const { expire } = access;
+  const { expire: expireAccess, signOut: signOutAccess } = access;
+  const { restoreInFlight, clear: clearDraft } = draft;
+  // Chave recusada durante o uso: a pergunta em voo volta ao campo antes de ir à tela de acesso.
+  const expire = useCallback(() => {
+    restoreInFlight();
+    expireAccess();
+  }, [restoreInFlight, expireAccess]);
+  const signOut = useCallback(() => {
+    clearDraft();
+    signOutAccess();
+  }, [clearDraft, signOutAccess]);
   const client = useMemo(
     () =>
       createApiClient({
@@ -35,7 +47,7 @@ export function App({ services }: { services: AppServices }) {
     <AnnouncerProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="*" element={<ChatPage client={client} onSignOut={access.signOut} />} />
+          <Route path="*" element={<ChatPage client={client} onSignOut={signOut} persisted={services.accessKeyStore.persisted} />} />
         </Routes>
       </BrowserRouter>
     </AnnouncerProvider>

@@ -146,7 +146,13 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
     }
 
     const requestId = randomUUID();
-    const conversationId = conversation?.id ?? randomUUID();
+    // Como o backend real (chat.service): a conversa nasce no início; o par só é gravado no `done`.
+    if (!conversation) {
+      const now = new Date().toISOString();
+      conversation = { id: randomUUID(), createdAt: now, updatedAt: now, messages: [] };
+      conversations.set(conversation.id, conversation);
+    }
+    const conversationId = conversation.id;
     let closed = false;
     res.on("close", () => void (closed = true));
     res.writeHead(200, {
@@ -217,10 +223,6 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
 
     if (closed) return; // "Parar": o par não é gravado (contrato 001)
     const now = new Date().toISOString();
-    if (!conversation) {
-      conversation = { id: conversationId, createdAt: now, updatedAt: now, messages: [] };
-      conversations.set(conversation.id, conversation);
-    }
     conversation.messages.push(
       { id: nextMessageId++, role: "user", content: body.message.trim(), createdAt: now },
       { id: nextMessageId++, role: "assistant", content: answer, createdAt: now },

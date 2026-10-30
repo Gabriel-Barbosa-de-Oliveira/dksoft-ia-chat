@@ -14,7 +14,12 @@ export const FAKE_API_PORT = 3999;
 export const WIDTHS = { phone: 320, tablet: 768, desktop: 1280 } as const;
 
 export interface Stack {
+  /** Servidor falso atual (troca quando `startApi` religa). */
   api: FakeApi;
+  /** Desliga a API (para simular servidor fora do ar). */
+  stopApi(): Promise<void>;
+  /** Religa a API na mesma porta, com os dados zerados. */
+  startApi(scenario?: Scenario): Promise<void>;
   appUrl: string;
   browser: Browser;
   /** Abre uma página nova (contexto isolado) já na tela inicial. */
@@ -35,7 +40,8 @@ export interface PageOptions {
 }
 
 export async function startStack(scenario: Scenario = "ok"): Promise<Stack> {
-  const api = await startFakeApi({ port: FAKE_API_PORT, scenario });
+  let api = await startFakeApi({ port: FAKE_API_PORT, scenario });
+  let apiUp = true;
   const server: PreviewServer = await preview({
     root: ROOT,
     configFile: join(ROOT, "vite.config.ts"),
@@ -46,8 +52,19 @@ export async function startStack(scenario: Scenario = "ok"): Promise<Stack> {
   const appUrl = server.resolvedUrls?.local[0]?.replace(/\/$/, "") ?? "";
   const browser = await chromium.launch();
 
-  return {
-    api,
+  const stack: Stack = {
+    get api() {
+      return api;
+    },
+    async stopApi() {
+      if (apiUp) await api.close();
+      apiUp = false;
+    },
+    async startApi(next = "ok") {
+      if (apiUp) await api.close();
+      api = await startFakeApi({ port: FAKE_API_PORT, scenario: next });
+      apiUp = true;
+    },
     appUrl,
     browser,
     async open(options = {}) {
@@ -74,9 +91,10 @@ export async function startStack(scenario: Scenario = "ok"): Promise<Stack> {
     async close() {
       await browser.close();
       await server.close();
-      await api.close();
+      if (apiUp) await api.close();
     },
   };
+  return stack;
 }
 
 export async function signIn(page: Page, key: string = TEST_KEY): Promise<void> {
