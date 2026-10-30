@@ -6,7 +6,7 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 
 - `mcp/` — servidor MCP (stdio) que expõe a API DKSOFT como tools; já existe, com token no `.env`
 - `api/` — backend do agente (Fastify + LangGraph + SSE), spec 001; camadas `http/` → `services/` → `store/` e `agent/`, `domain/` puro; testes ao lado do código
-- `web/` — front do chat (Vite + React + TS) — a criar
+- `web/` — front do chat (Vite + React + TS), spec 002; camadas `components → hooks → (api, storage) → lib`, `lib` puro; testes ao lado do código
 - `data/` — contrato da API (`openapi.json`, `api-types.ts`)
 - `specs/` — specs, planos e tarefas do Spec Kit
 
@@ -25,6 +25,7 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 
 - `npm --prefix mcp test` · `npm --prefix api test` · `npm --prefix api run typecheck`
 - `npm --prefix api run dev` (lê `api/.env`; variáveis em `api/.env.example`)
+- `npm --prefix web run dev` · `typecheck` · `lint` · `test` · `build` · `test:e2e` (E2E usa servidor falso do contrato 001; ver `specs/002-chat-web-ui/quickstart.md`)
 
 ## Convenções
 

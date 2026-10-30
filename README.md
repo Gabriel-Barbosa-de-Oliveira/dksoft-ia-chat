@@ -1,6 +1,6 @@
 # dksoft-ia-chat
 
-Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e contas pagas). O agente usa LangChain/LangGraph sobre o OpenRouter e as tools do MCP em `mcp/`. O front (`web/`) é uma spec futura.
+Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e contas pagas). O agente usa LangChain/LangGraph sobre o OpenRouter e as tools do MCP em `mcp/`. O front (`web/`, spec 002) é Vite + React + TypeScript; para subir, veja `specs/002-chat-web-ui/quickstart.md`.
 
 ## Estrutura
 

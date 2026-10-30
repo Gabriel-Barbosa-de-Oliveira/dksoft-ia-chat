@@ -153,3 +153,7 @@ api/data/
 *.db
 *.db-wal
 *.db-shm
+
+# web
+web/dist/
+web/test-results/
