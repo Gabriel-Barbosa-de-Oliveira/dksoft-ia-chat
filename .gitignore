@@ -69,6 +69,7 @@ web_modules/
 .env
 .env.*
 !.env.example
+!.env.e2e
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -156,4 +157,5 @@ api/data/
 
 # web
 web/dist/
+web/dist-e2e/
 web/test-results/

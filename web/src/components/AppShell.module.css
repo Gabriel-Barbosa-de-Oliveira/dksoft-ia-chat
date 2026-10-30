@@ -1,0 +1,46 @@
+.shell {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+}
+
+.body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+.aside {
+  display: none;
+  width: 22rem;
+  flex: none;
+  overflow-y: auto;
+  border-right: var(--rule) solid var(--color-divider);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.title {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: 1.25rem;
+  border-bottom: var(--rule) solid var(--color-divider);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (min-width: 64rem) {
+  .aside {
+    display: block;
+  }
+}

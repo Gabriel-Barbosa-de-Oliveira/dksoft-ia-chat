@@ -1,0 +1,55 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--rule) solid var(--color-divider);
+  background: var(--color-bg);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.textarea {
+  field-sizing: content;
+  min-height: var(--space-16);
+  max-height: 12rem;
+  resize: none;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.hint,
+.counter,
+.problem {
+  margin: 0;
+}
+
+.problem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.btn {
+  min-width: 8rem;
+  justify-content: space-between;
+}

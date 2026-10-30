@@ -10,6 +10,8 @@
   --space-12: 48px;
   --space-16: 64px;
 
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
   --rule: 2px;
   --rule-thin: 1px;
   --target-min: calc(var(--space-12) - var(--space-1));
