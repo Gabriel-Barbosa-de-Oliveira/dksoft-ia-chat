@@ -1,0 +1,145 @@
+/* Globais do app: correções do design system por tokens, utilitários e movimento reduzido.
+   Sem cores literais nem px: use var(--...). Estilo de componente fica em Componente.module.css. */
+
+html {
+  overflow-wrap: anywhere;
+}
+
+body {
+  min-width: 20rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* — correções de contraste e alvo mínimo (research.md, itens 9 a 12) — */
+a {
+  color: var(--color-link);
+}
+
+.btn {
+  min-height: var(--target-min);
+}
+
+.btn-primary {
+  background: var(--color-action);
+  color: var(--color-on-action);
+}
+.btn-primary:hover {
+  background: var(--color-action-hover);
+}
+.btn-primary:active {
+  background: var(--color-action-pressed);
+}
+
+.btn-secondary {
+  border-color: var(--color-border-control);
+}
+
+.btn-ghost {
+  color: var(--color-link);
+}
+.btn-ghost:hover {
+  background: color-mix(in srgb, var(--color-link) 10%, transparent);
+}
+.btn-ghost:active {
+  background: color-mix(in srgb, var(--color-link) 18%, transparent);
+}
+
+.btn-icon {
+  width: var(--target-min);
+  height: var(--target-min);
+}
+
+.input {
+  min-height: var(--target-min);
+  border-color: var(--color-border-control);
+}
+
+.seg {
+  border-color: var(--color-border-control);
+}
+.seg-opt {
+  min-height: var(--target-min);
+}
+.seg-opt + .seg-opt {
+  border-left-color: var(--color-border-control);
+}
+.seg-opt:has(input:checked) {
+  background: var(--color-action);
+  color: var(--color-on-action);
+}
+
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+}
+.nav a:hover,
+.nav a[aria-current="page"] {
+  color: var(--color-link);
+}
+
+.text-muted,
+figcaption,
+.card-meta {
+  color: var(--color-text-muted);
+}
+
+.table th {
+  color: var(--color-text-muted);
+}
+
+.field > label {
+  color: var(--color-text-muted);
+}
+
+:focus-visible {
+  outline-color: var(--color-focus);
+}
+.input:focus-visible {
+  border-color: var(--color-focus);
+}
+
+.dialog {
+  border: var(--rule) solid var(--color-divider);
+}
+
+/* — utilitários — */
+.sr-only {
+  position: absolute;
+  width: var(--rule-thin);
+  height: var(--rule-thin);
+  margin: calc(var(--rule-thin) * -1);
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: var(--rule) solid var(--color-text);
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

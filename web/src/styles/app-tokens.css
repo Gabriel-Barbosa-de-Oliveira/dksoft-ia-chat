@@ -1,0 +1,75 @@
+/* Sobreposição do app sobre o design system Modernist (vendorizado em modernist.css).
+   Único arquivo, além de modernist.css, onde cores literais são permitidas.
+   Só usa degraus das rampas do próprio DS. Valores e contrastes: specs/002-chat-web-ui/research.md, itens 9 a 13.
+   O bloco escuro aparece duas vezes (CSS não compartilha declarações): um teste garante que são idênticos. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Escala de espaçamento ampliada (o DS termina em 32px) — sinalizada para revisão humana. */
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --rule: 2px;
+  --rule-thin: 1px;
+  --target-min: calc(var(--space-12) - var(--space-1));
+
+  --color-surface-raised: var(--color-neutral-200);
+  --color-action: var(--color-accent-700);
+  --color-action-hover: var(--color-accent-800);
+  --color-action-pressed: var(--color-accent-900);
+  --color-on-action: var(--color-bg);
+  --color-link: var(--color-accent-700);
+  --color-border-control: var(--color-neutral-600);
+  --color-text-muted: var(--color-neutral-700);
+  --color-focus: var(--color-accent);
+  --color-icon-alert: var(--color-accent-700);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #201e1d;
+    --color-surface: #2d2b2b;
+    --color-surface-raised: var(--color-neutral-800);
+    --color-text: #f3f2f2;
+    --color-divider: color-mix(in srgb, #f3f2f2 40%, transparent);
+    --color-action: var(--color-accent-500);
+    --color-action-hover: var(--color-accent-400);
+    --color-action-pressed: var(--color-accent-300);
+    --color-on-action: var(--color-bg);
+    --color-link: var(--color-accent-400);
+    --color-border-control: color-mix(in srgb, var(--color-text) 60%, transparent);
+    --color-text-muted: var(--color-neutral-400);
+    --color-focus: var(--color-accent-500);
+    --color-icon-alert: var(--color-accent-400);
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #201e1d;
+  --color-surface: #2d2b2b;
+  --color-surface-raised: var(--color-neutral-800);
+  --color-text: #f3f2f2;
+  --color-divider: color-mix(in srgb, #f3f2f2 40%, transparent);
+  --color-action: var(--color-accent-500);
+  --color-action-hover: var(--color-accent-400);
+  --color-action-pressed: var(--color-accent-300);
+  --color-on-action: var(--color-bg);
+  --color-link: var(--color-accent-400);
+  --color-border-control: color-mix(in srgb, var(--color-text) 60%, transparent);
+  --color-text-muted: var(--color-neutral-400);
+  --color-focus: var(--color-accent-500);
+  --color-icon-alert: var(--color-accent-400);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
