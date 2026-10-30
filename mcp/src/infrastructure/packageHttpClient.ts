@@ -1,4 +1,5 @@
-import { type PackagesResponse } from "../domain/package.ts";
+import { PackagesResponseSchema, type PackagesResponse } from "../domain/package.ts";
+import { assertOk, parseResponse } from "./apiHttpError.ts";
 import { withBearerToken, type FetchFn } from "./authInterceptor.ts";
 
 export class PackageHttpClient {
@@ -12,6 +13,7 @@ export class PackageHttpClient {
 
     async listPackages(): Promise<PackagesResponse> {
         const res = await this.fetch(`${this.baseUrl}/pacotes`)
-        return res.json() as Promise<PackagesResponse>
+        await assertOk(res)
+        return parseResponse(PackagesResponseSchema, await res.json())
     }
 }

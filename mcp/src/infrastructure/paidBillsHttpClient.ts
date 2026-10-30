@@ -1,4 +1,5 @@
-import { type PaidBillsQuery, type PaidBillsResponse } from "../domain/paidBills.ts";
+import { PaidBillsResponseSchema, type PaidBillsQuery, type PaidBillsResponse } from "../domain/paidBills.ts";
+import { assertOk, parseResponse } from "./apiHttpError.ts";
 import { withBearerToken, type FetchFn } from "./authInterceptor.ts";
 
 export class PaidBillsHttpClient {
@@ -16,6 +17,7 @@ export class PaidBillsHttpClient {
             data_final: query.data_final,
         })
         const res = await this.fetch(`${this.baseUrl}/financeiro/contas-pagas?${params}`)
-        return res.json() as Promise<PaidBillsResponse>
+        await assertOk(res)
+        return parseResponse(PaidBillsResponseSchema, await res.json())
     }
 }

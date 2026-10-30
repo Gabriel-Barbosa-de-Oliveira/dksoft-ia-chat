@@ -76,7 +76,7 @@ export function validatePaidBillsPeriod(dataInicial: string, dataFinal: string):
     if (end < start) {
         return `Invalid period: data_final (${dataFinal}) must be on or after data_inicial (${dataInicial}).`
     }
-    if ((end - start) / DAY_IN_MS > MAX_PAID_BILLS_PERIOD_DAYS) {
-        return `It is not possible to search paid bills for the period from ${dataInicial} to ${dataFinal}. The period must be at most ${MAX_PAID_BILLS_PERIOD_DAYS} days.`
+    if ((end - start) / DAY_IN_MS + 1 > MAX_PAID_BILLS_PERIOD_DAYS) {
+        return `It is not possible to search paid bills for the period from ${dataInicial} to ${dataFinal}. The period must be at most ${MAX_PAID_BILLS_PERIOD_DAYS} days, counting both dates.`
     }
 }

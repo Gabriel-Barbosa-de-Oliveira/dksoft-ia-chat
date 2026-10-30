@@ -1,4 +1,5 @@
-import { type ReceivableAccountQuery, type ReceivableAccountsResponse } from "../domain/receivableAccount.ts";
+import { ReceivableAccountsResponseSchema, type ReceivableAccountQuery, type ReceivableAccountsResponse } from "../domain/receivableAccount.ts";
+import { assertOk, parseResponse } from "./apiHttpError.ts";
 import { withBearerToken, type FetchFn } from "./authInterceptor.ts";
 
 export class ReceivableAccountHttpClient {
@@ -16,6 +17,7 @@ export class ReceivableAccountHttpClient {
             data_final: query.data_final,
         })
         const res = await this.fetch(`${this.baseUrl}/financeiro/contas-recebidas?${params}`)
-        return res.json() as Promise<ReceivableAccountsResponse>
+        await assertOk(res)
+        return parseResponse(ReceivableAccountsResponseSchema, await res.json())
     }
 }
