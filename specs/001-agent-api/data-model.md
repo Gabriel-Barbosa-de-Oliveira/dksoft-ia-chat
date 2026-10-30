@@ -108,6 +108,8 @@ Códigos de erro do stream: `timeout`, `model_unavailable`, `tools_unavailable`,
 | `DKSOFT_MAX_CONCURRENCY` | inteiro 1–5 | `4` |
 | `DKSOFT_MAX_PER_MINUTE` | inteiro 1–60 | `50` |
 | `TOOL_RESULT_MAX_ROWS` | inteiro ≥ 1 | `40` |
+| `CHAT_RATE_LIMIT_PER_MIN` | inteiro ≥ 1; limite por IP em `POST /chat` | `30` |
+| `MCP_ENTRY` | caminho do `index.ts` do MCP que o `api/` sobe por stdio | `../mcp/src/index.ts` (relativo a `api/`) |
 
 ## Relacionamentos
 

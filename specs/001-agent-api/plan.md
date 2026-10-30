@@ -92,12 +92,14 @@ api/                                   # novo pacote npm (sem workspaces)
     ├── http/
     │   ├── app.ts                     # createApp(options): injeção de dependências
     │   ├── auth.ts                    # hook de chave de acesso (timingSafeEqual)
+    │   ├── cors.ts                    # allowlist exata de origens (403 fora da lista)
     │   ├── sse.ts                     # formatSseEvent (pura) + abertura do stream
     │   ├── errors.ts                  # erro de domínio → status/código
     │   └── routes/{chat,conversations,health}.ts
     ├── domain/                        # puro, sem IO
     │   ├── errors.ts
     │   ├── events.ts                  # StreamEvent (zod)
+    │   ├── agent-port.ts              # AgentEvent e interface AgentRunner (services ↔ agent)
     │   ├── period.ts                  # splitPeriod
     │   ├── shape-result.ts            # shapeToolResult
     │   ├── mask-pii.ts
@@ -106,6 +108,7 @@ api/                                   # novo pacote npm (sem workspaces)
     │   └── system-prompt.ts
     ├── services/
     │   ├── chat.service.ts            # orquestra histórico + agente + eventos + runs
+    │   ├── conversation-lock.ts       # fila por conversa (exclusão mútua FIFO)
     │   ├── conversation-store.repository.ts   # interface
     │   ├── run-store.repository.ts            # interface
     │   └── limiter.ts                 # núcleo do limitador (relógio injetado)
@@ -113,7 +116,8 @@ api/                                   # novo pacote npm (sem workspaces)
     │   ├── model.ts                   # ChatOpenAI → OpenRouter
     │   ├── tools.ts                   # MCPAdapter, allowlist, tools de período
     │   ├── middleware.ts              # retry, fallback, limitador, shape
-    │   └── agent.ts                   # createAgent + stream de eventos
+    │   ├── agent.ts                   # createAgent + stream de eventos
+    │   └── testing/scripted-model.ts  # modelo falso para os testes (sem rede)
     ├── store/                         # IO: SQLite
     │   ├── db.ts                      # abertura e schema
     │   ├── sqlite-conversation-store.ts
