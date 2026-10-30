@@ -6,7 +6,7 @@ import type { AgentEvent, AgentInput, AgentRunner } from "../domain/agent-port.t
 import type { ShapeLimits } from "../domain/shape-result.ts"
 import { buildSystemPrompt } from "../domain/system-prompt.ts"
 import type { Limiter } from "../services/limiter.ts"
-import { modelTracker, resilienceMiddleware, shapeResultsMiddleware, toolRetryAndLimiter, type RunTracker } from "./middleware.ts"
+import { AGENT_RECURSION_LIMIT, modelTracker, resilienceMiddleware, shapeResultsMiddleware, toolCallLimit, toolRetryAndLimiter, type RunTracker } from "./middleware.ts"
 import { composeTools } from "./tools.ts"
 
 export type AgentRunnerDeps = {
@@ -39,7 +39,7 @@ export function createAgentRunner(deps: AgentRunnerDeps): AgentRunner {
             })
             const stream = await agent.stream(
                 { messages: [...input.history, { role: "user", content: input.message }] },
-                { streamMode: ["messages", "updates"], signal: input.signal },
+                { streamMode: ["messages", "updates"], signal: input.signal, recursionLimit: AGENT_RECURSION_LIMIT },
             )
             for await (const item of stream as AsyncIterable<[string, unknown]>) {
                 const [mode, data] = item
@@ -87,6 +87,7 @@ export function createProductionAgent(deps: ProductionAgentDeps): AgentRunner {
         ...(deps.now ? { now: deps.now } : {}),
         extraMiddleware: (tracker) => [
             ...resilienceMiddleware({ fallbackModel: deps.fallbackModel, ...(deps.retryDelays?.model !== undefined ? { modelRetryDelayMs: deps.retryDelays.model } : {}) }),
+            toolCallLimit(tracker),
             ...toolRetryAndLimiter(deps.limiter, deps.retryDelays?.tool !== undefined ? { toolRetryDelayMs: deps.retryDelays.tool } : {}),
             modelTracker(tracker),
         ],

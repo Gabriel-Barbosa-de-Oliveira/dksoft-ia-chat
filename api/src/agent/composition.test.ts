@@ -11,6 +11,7 @@ import { openDatabase } from "../store/db.ts"
 import { createSqliteConversationStore } from "../store/sqlite-conversation-store.ts"
 import { createSqliteRunStore } from "../store/sqlite-run-store.ts"
 import { createProductionAgent } from "./agent.ts"
+import { MAX_TOOL_CALLS_PER_RUN } from "./middleware.ts"
 import { ScriptedModel } from "./testing/scripted-model.ts"
 
 const schema = z.object({ data_inicial: z.string(), data_final: z.string(), aluno: z.string().optional(), pacote: z.string().optional() })
@@ -40,6 +41,19 @@ test("75-day question: 3 windows, exact consolidated total, done.partial reflect
     assert.match(text(events), /900,00/)
     const done = events.at(-1)!
     assert.ok(done.event === "done" && done.data.partial === true, "90 rows > 40 → partial")
+})
+
+test("sequential fan-out stops at the tool limit and the model still answers", async () => {
+    let executed = 0
+    const period = { data_inicial: "2026-01-01", data_final: "2026-01-02" }
+    const calls = Array.from({ length: MAX_TOOL_CALLS_PER_RUN + 1 }, (_, i) => new AIMessage({ content: "", tool_calls: [{ name: "financeiro_contas_pagas_periodo", args: period, id: `c${i}` }] }))
+    const primary = new ScriptedModel({ name: "principal", script: [...calls, new AIMessage("Não consegui consultar todos.")] })
+    const { service } = build({ primary, paid: async () => { executed++; return "[]" } })
+    const events = await drain(service.start({ message: "consulte um por um" }).events)
+    assert.equal(executed, MAX_TOOL_CALLS_PER_RUN)
+    assert.equal(text(events), "Não consegui consultar todos.")
+    const done = events.at(-1)!
+    assert.ok(done.event === "done" && done.data.partial === true, "blocked calls → partial")
 })
 
 test("primary down → reserve answers and done.model is the reserve", async () => {

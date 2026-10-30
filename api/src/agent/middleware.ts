@@ -83,6 +83,26 @@ export function toolRetryAndLimiter(limiter: Limiter, opts: { toolRetryDelayMs?:
     ]
 }
 
+export const MAX_TOOL_CALLS_PER_RUN = 10
+// each round costs 2 graph steps (model, tools); leaves room for the blocked round and the final answer
+export const AGENT_RECURSION_LIMIT = (MAX_TOOL_CALLS_PER_RUN + 3) * 2
+
+const TOOL_LIMIT_MESSAGE = "Limite de consultas desta pergunta atingido. Não faça mais consultas: responda com o que já tem e avise que o resultado está incompleto."
+
+// stops per-student fan-out: blocked calls become a message and the model answers with what it has
+// (langchain's toolCallLimitMiddleware ends the run without an answer when a whole round is blocked)
+export function toolCallLimit(tracker: RunTracker): AnyAgentMiddleware {
+    let calls = 0
+    return createMiddleware({
+        name: "ToolCallLimit",
+        wrapToolCall: async (request, handler) => {
+            if (++calls <= MAX_TOOL_CALLS_PER_RUN) return handler(request)
+            tracker.partial = true
+            return new ToolMessage({ content: TOOL_LIMIT_MESSAGE, tool_call_id: request.toolCall.id ?? "", name: request.toolCall.name, status: "error" })
+        },
+    }) as AnyAgentMiddleware
+}
+
 function modelNameOf(model: unknown): string | null {
     const m = model as { model?: unknown; modelName?: unknown }
     if (typeof m?.model === "string") return m.model
