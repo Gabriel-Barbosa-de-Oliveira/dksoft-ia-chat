@@ -39,4 +39,5 @@
   3. Alvos de toque de 44 px, já que `.btn-icon` e `.input` do design system têm 36 px.
   4. Cor de erro distinta do acento vermelho, combinando texto, ícone e forma.
   5. Como identificar conversas na lista sem título na API (data e hora, mais trecho da primeira pergunta se for viável sem mudar o contrato).
+- Resolução no `/speckit-plan` (2026-10-30): os cinco pontos acima foram decididos em `research.md` (itens 6, 9, 10, 11, 12 e 13) **sem alterar esta spec**. Stack mantida em React + Vite (constitution), gráficos e voz seguem fora de escopo. Achado novo: o design system, como entregue, reprova WCAG 2.1 AA no tema claro (FR-022 versus FR-024); a correção usa só degraus das rampas do próprio DS, preservando o SC-012.
 - Dependência: contrato HTTP da spec 001 (`specs/001-agent-api/contracts/http.md`) usado sem alterações; a origem do front precisa estar na allowlist de CORS do backend.
