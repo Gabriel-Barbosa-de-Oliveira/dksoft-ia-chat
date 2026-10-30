@@ -139,9 +139,9 @@ description: "Tarefas da spec 001 — API do Agente de Chat"
 
 ## Phase 7: Polish e transversais
 
-- [ ] T048 [P] Atualizar `README.md` (como rodar `mcp/` e `api/`, variáveis, link para a spec) e `CLAUDE.md` (comandos `npm --prefix api …`, env, estrutura real do `api/`)
-- [ ] T049 [P] Revisão de segurança: buscar em `api/src` e `mcp/src` qualquer log de conteúdo de pergunta, token ou chave; confirmar que `.env` não é lido por código nem por skills; `npm --prefix api audit --omit=dev` e `npm --prefix mcp audit --omit=dev`, registrando o resultado no PR
-- [ ] T050 Rodar tudo em `mcp/` e `api/`: `npm --prefix mcp test`, `npm --prefix api run typecheck`, `npm --prefix api test`, inclusive no Node 24, o alvo do projeto (R6 em `specs/001-agent-api/research.md`)
+- [X] T048 [P] Atualizar `README.md` (como rodar `mcp/` e `api/`, variáveis, link para a spec) e `CLAUDE.md` (comandos `npm --prefix api …`, env, estrutura real do `api/`)
+- [X] T049 [P] Revisão de segurança: buscar em `api/src` e `mcp/src` qualquer log de conteúdo de pergunta, token ou chave; confirmar que `.env` não é lido por código nem por skills; `npm --prefix api audit --omit=dev` e `npm --prefix mcp audit --omit=dev`, registrando o resultado no PR
+- [X] T050 Rodar tudo em `mcp/` e `api/`: `npm --prefix mcp test`, `npm --prefix api run typecheck`, `npm --prefix api test`, inclusive no Node 24, o alvo do projeto (R6 em `specs/001-agent-api/research.md`)
 - [ ] T051 Validar com o modelo e a API DKSOFT **reais** seguindo todo o `specs/001-agent-api/quickstart.md`: observar SC-001 a SC-008 (SC-002 e SC-003 com o modelo escolhido), confirmar na API real se o dia 31 é recusado (R7) e registrar os resultados no PR
 
 ---

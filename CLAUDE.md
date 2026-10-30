@@ -5,7 +5,7 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 ## Estrutura
 
 - `mcp/` — servidor MCP (stdio) que expõe a API DKSOFT como tools; já existe, com token no `.env`
-- `api/` — backend do agente (Fastify + LangGraph + SSE) — a criar (spec 001)
+- `api/` — backend do agente (Fastify + LangGraph + SSE), spec 001; camadas `http/` → `services/` → `store/` e `agent/`, `domain/` puro; testes ao lado do código
 - `web/` — front do chat (Vite + React + TS) — a criar
 - `data/` — contrato da API (`openapi.json`, `api-types.ts`)
 - `specs/` — specs, planos e tarefas do Spec Kit
@@ -20,6 +20,11 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 - SQLite via `node:sqlite` (`DatabaseSync`); `:memory:` em testes
 - LangChain/LangGraph 1.x sobre OpenRouter, com modelo de reserva
 - Frontend em `web/` (Vite + React + TS), pacote npm separado — design em `.github/instructions/design.instructions.md`
+
+## Comandos
+
+- `npm --prefix mcp test` · `npm --prefix api test` · `npm --prefix api run typecheck`
+- `npm --prefix api run dev` (lê `api/.env`; variáveis em `api/.env.example`)
 
 ## Convenções
 

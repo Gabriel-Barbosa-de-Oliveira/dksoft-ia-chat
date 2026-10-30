@@ -2,6 +2,9 @@ import { ChatTimeoutError, ModelUnavailableError, ToolsUnavailableError } from "
 
 const NETWORK_CODES = new Set(["ECONNRESET", "ETIMEDOUT", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN", "EPIPE", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_SOCKET", "UND_ERR_HEADERS_TIMEOUT"])
 
+const CONNECTION_NAMES = new Set(["APIConnectionError", "APIConnectionTimeoutError"])
+const isConnectionError = (e: ErrLike) => (typeof e.name === "string" && CONNECTION_NAMES.has(e.name)) || (typeof e.message === "string" && /^connection error\.?$/i.test(e.message))
+
 type ErrLike = { name?: string; status?: unknown; statusCode?: unknown; code?: unknown; response?: { status?: unknown }; cause?: unknown; message?: unknown }
 
 function statusOf(err: ErrLike): number | undefined {
@@ -16,7 +19,7 @@ export function isTransientModelError(err: unknown): boolean {
     const status = statusOf(e)
     if (status !== undefined) return status === 408 || status === 429 || status >= 500
     if (typeof e.code === "string" && NETWORK_CODES.has(e.code)) return true
-    if (e.name === "TimeoutError") return true
+    if (e.name === "TimeoutError" || isConnectionError(e)) return true
     return e.cause ? isTransientModelError(e.cause) : false
 }
 
@@ -37,6 +40,6 @@ export function classifyAgentError(err: unknown): unknown {
     if (chain.some((e) => e.name === "TimeoutError")) return new ChatTimeoutError()
     if (chain.some((e) => e.name === "AbortError")) return err
     if (chain.some((e) => e.name === "ToolException" || e.name === "McpError" || e.name === "ToolInvocationError")) return new ToolsUnavailableError({ cause: err })
-    if (chain.some((e) => statusOf(e) !== undefined || (typeof e.code === "string" && NETWORK_CODES.has(e.code)))) return new ModelUnavailableError({ cause: err })
+    if (chain.some((e) => statusOf(e) !== undefined || (typeof e.code === "string" && NETWORK_CODES.has(e.code)) || isConnectionError(e))) return new ModelUnavailableError({ cause: err })
     return err
 }

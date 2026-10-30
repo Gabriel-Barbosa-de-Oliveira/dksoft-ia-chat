@@ -19,6 +19,8 @@ test("classifyAgentError with real-shaped errors", () => {
     assert.ok(classifyAgentError(Object.assign(new Error("t"), { name: "TimeoutError" })) instanceof ChatTimeoutError)
     const wrapped = Object.assign(new Error("wrapper"), { cause: Object.assign(new Error("503"), { status: 503 }) })
     assert.ok(classifyAgentError(wrapped) instanceof ModelUnavailableError)
+    assert.ok(classifyAgentError(new Error("Connection error.")) instanceof ModelUnavailableError)
+    assert.ok(isTransientModelError(new Error("Connection error.")))
     const abort = Object.assign(new Error("a"), { name: "AbortError" })
     assert.equal(classifyAgentError(abort), abort)
     const plain = new Error("bug")
