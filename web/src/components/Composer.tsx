@@ -1,5 +1,5 @@
 import { useId, useState, type KeyboardEvent, type ReactNode, type Ref } from "react";
-import { CircleAlert, Send, Square } from "lucide-react";
+import { ArrowUp, CircleAlert, Square } from "lucide-react";
 import { MAX_MESSAGE_LENGTH, showCounter, validateMessage } from "../lib/validation.ts";
 import styles from "./Composer.module.css";
 
@@ -60,12 +60,16 @@ export function Composer({ value, onChange, onSubmit, onStop, busy, blocked = fa
         submit();
       }}
     >
-      <div className={`field ${styles.field}`}>
-        <label htmlFor={`${id}-input`}>Pergunta</label>
+      <div className={styles.box}>
+        <label htmlFor={`${id}-input`} className="sr-only">
+          Pergunta
+        </label>
         <textarea
           id={`${id}-input`}
           ref={inputRef}
-          className={`input ${styles.textarea}`}
+          className={styles.textarea}
+          rows={1}
+          placeholder="Escreva uma mensagem…"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={onKeyDown}
@@ -73,41 +77,39 @@ export function Composer({ value, onChange, onSubmit, onStop, busy, blocked = fa
           aria-invalid={problem ? true : undefined}
           autoComplete="off"
         />
-      </div>
-      <div className={styles.meta}>
-        <p id={`${id}-hint`} className={styles.hint}>
-          Enter envia · Shift+Enter quebra a linha
-        </p>
-        {showCounter(value.length) ? (
-          <p id={`${id}-count`} className={styles.counter}>
-            {value.trim().length}/{MAX_MESSAGE_LENGTH}
+        {problem ? (
+          <p id={`${id}-problem`} className={styles.problem}>
+            <CircleAlert size={16} aria-hidden="true" />
+            {problem}
           </p>
         ) : null}
-      </div>
-      {problem ? (
-        <p id={`${id}-problem`} className={styles.problem}>
-          <CircleAlert size={16} aria-hidden="true" />
-          {problem}
-        </p>
-      ) : null}
-      {blockedReason ? (
-        <p id={`${id}-blocked`} className={styles.problem}>
-          <CircleAlert size={16} aria-hidden="true" />
-          {blockedReason}
-        </p>
-      ) : null}
-      <div className={styles.actions}>
-        <button type="submit" className={`btn btn-primary ${styles.btn}`} aria-disabled={cannotSend || undefined}>
-          Enviar
-          <Send size={16} aria-hidden="true" />
-        </button>
-        {busy ? (
-          <button type="button" className={`btn btn-secondary ${styles.btn}`} onClick={onStop}>
-            Parar
-            <Square size={16} aria-hidden="true" />
-          </button>
+        {blockedReason ? (
+          <p id={`${id}-blocked`} className={styles.problem}>
+            <CircleAlert size={16} aria-hidden="true" />
+            {blockedReason}
+          </p>
         ) : null}
-        {actions}
+        <div className={styles.footer}>
+          <p id={`${id}-hint`} className={styles.hint}>
+            {busy ? "O agente está respondendo…" : "Enter envia · Shift + Enter quebra linha"}
+          </p>
+          {showCounter(value.length) ? (
+            <p id={`${id}-count`} className={styles.hint}>
+              {value.trim().length} / {MAX_MESSAGE_LENGTH} caracteres
+            </p>
+          ) : null}
+          <div className={styles.actions}>
+            {actions}
+            {busy ? (
+              <button type="button" className={`btn btn-icon btn-secondary ${styles.round}`} aria-label="Parar" title="Parar" onClick={onStop}>
+                <Square size={16} aria-hidden="true" />
+              </button>
+            ) : null}
+            <button type="submit" className={`btn btn-icon btn-primary ${styles.round} ${styles.send}`} aria-label="Enviar" title="Enviar" aria-disabled={cannotSend || undefined}>
+              <ArrowUp size={20} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
       </div>
     </form>
   );

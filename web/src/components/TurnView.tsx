@@ -35,7 +35,7 @@ function CopyButton({ text }: { text: string }) {
   };
 
   return (
-    <button type="button" className="btn btn-secondary" onClick={copy}>
+    <button type="button" className="btn btn-ghost" onClick={copy}>
       {copied ? "Copiado" : "Copiar"}
       {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
     </button>
@@ -48,51 +48,52 @@ export function TurnView({ turn, renderError, canCopy }: TurnViewProps) {
 
   return (
     <article className={styles.turn} aria-label="Pergunta e resposta">
-      <div>
-        <h3 className={styles.label}>Você</h3>
+      <div className={styles.user}>
+        <h3 className="sr-only">Você</h3>
         <p className={styles.question}>{turn.question}</p>
       </div>
-      <div aria-busy={streaming || undefined}>
-        <h3 className={styles.label}>Assistente</h3>
-        <ToolNotices tools={turn.tools} />
-        {turn.status === "pending" || (turn.status === "working" && turn.text === "" && turn.tools.length === 0) ? (
-          <p className={styles.pending}>
-            <LoaderCircle className={styles.spin} size={16} aria-hidden="true" />
-            Consultando…
-          </p>
-        ) : null}
-        {turn.text !== "" ? <Markdown text={turn.text} /> : null}
-        {turn.status === "done" && turn.partial ? (
-          <div className={styles.notice}>
+      <div className={styles.agent} aria-busy={streaming || undefined}>
+        <span className={styles.avatar} aria-hidden="true" />
+        <div className={styles.body}>
+          <h3 className="sr-only">Assistente</h3>
+          <ToolNotices tools={turn.tools} />
+          {turn.status === "pending" || (turn.status === "working" && turn.text === "" && turn.tools.length === 0) ? (
+            <p className={styles.pending}>
+              <LoaderCircle className={styles.spin} size={16} aria-hidden="true" />
+              Consultando…
+            </p>
+          ) : null}
+          {turn.text !== "" ? (
+            <div className={streaming ? styles.streaming : undefined}>
+              <Markdown text={turn.text} />
+            </div>
+          ) : null}
+          {turn.status === "done" && turn.partial ? (
             <StatusNotice variant="warning" title="Resultado parcial">
               A lista está incompleta. Refine a pergunta para ver o restante.
             </StatusNotice>
-          </div>
-        ) : null}
-        {turn.status === "interrupted" ? (
-          <div className={styles.notice}>
+          ) : null}
+          {turn.status === "interrupted" ? (
             <StatusNotice variant="interrupted" title="Resposta interrompida">
               Ela não será guardada no histórico.
             </StatusNotice>
-          </div>
-        ) : null}
-        {turn.status === "error" && turn.error ? (
-          <div className={styles.notice}>
-            {renderError ? (
+          ) : null}
+          {turn.status === "error" && turn.error ? (
+            renderError ? (
               renderError(turn)
             ) : (
               <StatusNotice variant="error" title={turn.error.title}>
                 {turn.error.message}
               </StatusNotice>
-            )}
-          </div>
-        ) : null}
-        {turn.status === "done" ? (
-          <div className={styles.footer}>
-            {showCopy ? <CopyButton text={turn.text} /> : null}
-            {turn.model ? <p className={`text-muted ${styles.model}`}><small>{turn.model}</small></p> : null}
-          </div>
-        ) : null}
+            )
+          ) : null}
+          {turn.status === "done" && (showCopy || turn.model) ? (
+            <div className={styles.footer}>
+              {showCopy ? <CopyButton text={turn.text} /> : null}
+              {turn.model ? <p className={styles.model}>{turn.model}</p> : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   );

@@ -100,7 +100,7 @@ export async function startStack(scenario: Scenario = "ok"): Promise<Stack> {
 export async function signIn(page: Page, key: string = TEST_KEY): Promise<void> {
   await page.getByLabel("Chave de acesso").fill(key);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await page.getByRole("heading", { level: 1, name: "Assistente DKSOFT" }).waitFor();
+  await page.locator("#conversa").waitFor();
 }
 
 export async function ask(page: Page, text: string): Promise<void> {

@@ -19,6 +19,8 @@ import { useConversationList } from "../hooks/useConversationList.ts";
 import { useConversationPreview } from "../hooks/useConversationPreview.ts";
 import { useCountdown } from "../hooks/useCountdown.ts";
 import type { Turn } from "../lib/chat-reducer.ts";
+import { conversationTitle, twoDigits } from "../lib/conversation-label.ts";
+import { connectionStatus } from "../lib/conversation-list.ts";
 import { toUserError } from "../lib/errors.ts";
 import { conversationPath, parseRoute } from "../lib/route.ts";
 import { isUuid } from "../lib/validation.ts";
@@ -230,24 +232,29 @@ export function ChatPage({ client, onSignOut, persisted = true }: ChatPageProps)
   }
 
   const canCompose = view.phase !== "not-found" && view.phase !== "loading";
+  const openId = view.conversationId;
+  const position = list.state.items.findIndex((item) => item.id === openId);
 
   return (
     <AppShell
+      title={conversationTitle(openId, view.turns[0]?.question, openId ? previews.preview(openId) : null)}
+      sessionLabel={position >= 0 ? twoDigits(list.state.items.length - position) : undefined}
+      connection={connectionStatus(list.state.status)}
       onSignOut={onSignOut}
       banner={<StorageNotice persisted={persisted} />}
       aside={
         <SectionBoundary>
-        <ConversationList
-          state={list.state}
-          currentId={view.conversationId}
-          now={now}
-          preview={previews.preview}
-          onVisible={previews.request}
-          onNew={onNew}
-          onOpen={onOpen}
-          onLoadMore={list.loadMore}
-          onRetry={list.reload}
-        />
+          <ConversationList
+            state={list.state}
+            currentId={openId}
+            now={now}
+            preview={previews.preview}
+            onVisible={previews.request}
+            onNew={onNew}
+            onOpen={onOpen}
+            onLoadMore={list.loadMore}
+            onRetry={list.reload}
+          />
         </SectionBoundary>
       }
     >

@@ -8,13 +8,13 @@ const render = (props: Partial<ComposerProps> = {}) => renderToStaticMarkup(<Com
 
 test("rótulo associado ao campo e dica ligada por aria-describedby", () => {
   const html = render();
-  const forId = /<label for="([^"]+)">Pergunta<\/label>/.exec(html)?.[1];
+  const forId = /<label for="([^"]+)"[^>]*>Pergunta<\/label>/.exec(html)?.[1];
   assert.ok(forId);
   assert.ok(html.includes(`id="${forId}"`));
   const hintId = /id="([^"]+-hint)"/.exec(html)?.[1];
   assert.ok(hintId);
   assert.match(html, new RegExp(`aria-describedby="[^"]*${hintId}`));
-  assert.match(html, /Enter envia · Shift\+Enter quebra a linha/);
+  assert.match(html, /Enter envia · Shift \+ Enter quebra linha/);
 });
 
 test("Parar só aparece durante a resposta", () => {
@@ -25,8 +25,8 @@ test("Parar só aparece durante a resposta", () => {
 });
 
 test("contador só a partir de 3600", () => {
-  assert.doesNotMatch(render({ value: "a".repeat(3599) }), /\/4000/);
-  assert.match(render({ value: "a".repeat(3600) }), /3600\/4000/);
+  assert.doesNotMatch(render({ value: "a".repeat(3599) }), /\/ 4000/);
+  assert.match(render({ value: "a".repeat(3600) }), /3600 \/ 4000 caracteres/);
 });
 
 test("excesso aparece em texto, com ícone, e marca o campo como inválido", () => {
@@ -42,8 +42,8 @@ test("motivo de bloqueio fica visível junto ao campo", () => {
   assert.match(html, /aria-disabled="true"/);
 });
 
-test("botões trazem rótulo visível e ícone decorativo", () => {
+test("botões só de ícone têm nome acessível e ícone decorativo", () => {
   const html = render({ busy: true });
-  assert.match(html, /Enviar<svg[^>]*aria-hidden="true"/);
-  assert.match(html, /Parar<svg[^>]*aria-hidden="true"/);
+  assert.match(html, /aria-label="Enviar"[^>]*><svg[^>]*aria-hidden="true"/);
+  assert.match(html, /aria-label="Parar"[^>]*><svg[^>]*aria-hidden="true"/);
 });

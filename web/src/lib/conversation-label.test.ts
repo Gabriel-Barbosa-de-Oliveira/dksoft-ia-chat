@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formatConversationDate, previewOf } from "./conversation-label.ts";
+import { conversationTitle, formatConversationDate, previewOf, twoDigits } from "./conversation-label.ts";
 
 test("previewOf normaliza espaços e não corta o curto", () => {
   assert.equal(previewOf("  Quais   pacotes\n existem? "), "Quais pacotes existem?");
@@ -34,4 +34,17 @@ test("hoje, ontem, mesmo ano e outro ano", () => {
 
 test("data inválida devolve vazio", () => {
   assert.equal(formatConversationDate("lixo", now, "pt-BR", TZ), "");
+});
+
+test("twoDigits completa com zero à esquerda", () => {
+  assert.equal(twoDigits(3), "03");
+  assert.equal(twoDigits(120), "120");
+});
+
+test("conversationTitle prefere a primeira pergunta, depois a prévia e por fim um rótulo genérico", () => {
+  assert.equal(conversationTitle(null, undefined, undefined), "Nova conversa");
+  assert.equal(conversationTitle("id", undefined, undefined), "Conversa");
+  assert.equal(conversationTitle("id", undefined, "Prévia"), "Prévia");
+  assert.equal(conversationTitle("id", "Pergunta  com   espaços", "Prévia"), "Pergunta com espaços");
+  assert.ok(conversationTitle("id", "palavra ".repeat(20), null).length <= 48);
 });

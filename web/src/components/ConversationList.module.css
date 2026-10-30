@@ -1,19 +1,45 @@
 .root {
   display: flex;
+  min-height: 0;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
 }
 
-.title {
-  margin: 0;
-  font-size: 1.25rem;
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) var(--space-2);
 }
 
 .new {
-  align-self: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  background: var(--color-bg);
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  min-width: 11rem;
+  gap: var(--space-2);
+}
+
+.title,
+.count {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.pad {
+  padding: var(--space-2) var(--space-4);
 }
 
 .empty {
@@ -21,21 +47,33 @@
   font-size: 0.875rem;
 }
 
+.nav {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+  padding: 0 var(--space-2) var(--space-2);
+}
+
 .list {
   display: flex;
   flex-direction: column;
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .item {
-  display: flex;
+  display: grid;
   min-height: var(--target-min);
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-2);
-  border-top: var(--rule-thin) solid var(--color-divider);
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
   color: var(--color-text);
   text-decoration: none;
 }
@@ -45,14 +83,36 @@
 }
 
 .item[aria-current="true"] {
-  border-left: var(--space-1) solid var(--color-text);
-  background: var(--color-surface);
-  font-weight: 600;
+  background: color-mix(in srgb, var(--color-text) 9%, transparent);
+}
+
+.number {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.item[aria-current="true"] .number {
+  color: var(--color-text-alert);
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
 }
 
 .preview {
-  overflow-wrap: anywhere;
+  overflow: hidden;
   font-size: 0.875rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item[aria-current="true"] .preview {
+  font-weight: 700;
 }
 
 .date {
@@ -62,9 +122,11 @@
 
 .more {
   align-self: flex-start;
+  margin-left: var(--space-2);
 }
 
 .problem {
   margin: 0;
+  padding: 0 var(--space-2);
   font-size: 0.875rem;
 }

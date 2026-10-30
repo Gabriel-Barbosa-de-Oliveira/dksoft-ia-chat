@@ -101,7 +101,7 @@ figcaption,
 }
 
 .dialog {
-  border: var(--rule) solid var(--color-divider);
+  border: var(--rule-thin) solid var(--line);
 }
 
 /* — utilitários — */

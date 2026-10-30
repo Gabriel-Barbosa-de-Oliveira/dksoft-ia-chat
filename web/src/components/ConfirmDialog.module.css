@@ -2,13 +2,15 @@
   width: calc(100% - var(--space-8));
   max-width: 28rem;
   padding: 0;
-  border: var(--rule) solid var(--color-text);
+  border: var(--rule-thin) solid var(--line);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
   color: var(--color-text);
 }
 
 .dialog::backdrop {
-  background: color-mix(in srgb, var(--color-neutral-900) 60%, transparent);
+  background: var(--color-scrim);
 }
 
 .content {
@@ -25,7 +27,7 @@
 
 .message {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 1rem;
 }
 
 .actions {

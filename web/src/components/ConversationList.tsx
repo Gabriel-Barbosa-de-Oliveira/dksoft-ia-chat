@@ -2,7 +2,7 @@ import { useCallback, useRef, type MouseEvent } from "react";
 import { Link } from "react-router";
 import { Plus } from "lucide-react";
 import { useInView } from "../hooks/useInView.ts";
-import { formatConversationDate } from "../lib/conversation-label.ts";
+import { formatConversationDate, twoDigits } from "../lib/conversation-label.ts";
 import type { ConversationListState } from "../lib/conversation-list.ts";
 import type { ConversationSummary } from "../lib/events.ts";
 import { conversationPath } from "../lib/route.ts";
@@ -25,6 +25,7 @@ export interface ConversationListProps {
 
 function Item({
   conversation,
+  number,
   current,
   now,
   preview,
@@ -32,6 +33,7 @@ function Item({
   onOpen,
 }: {
   conversation: ConversationSummary;
+  number: string;
   current: boolean;
   now: number;
   preview: string | null | undefined;
@@ -51,8 +53,11 @@ function Item({
         aria-current={current ? "true" : undefined}
         onClick={(event) => onOpen(conversation.id, event)}
       >
-        {preview ? <span className={styles.preview}>{preview}</span> : null}
-        <span className={styles.date}>{preview ? date : `Conversa de ${date}`}</span>
+        <span className={styles.number}>{number}</span>
+        <span className={styles.text}>
+          <span className={styles.preview}>{preview ?? `Conversa de ${date}`}</span>
+          {preview ? <span className={styles.date}>{date}</span> : null}
+        </span>
       </Link>
     </li>
   );
@@ -61,54 +66,66 @@ function Item({
 export function ConversationList({ state, currentId, now, preview, onVisible, onNew, onOpen, onLoadMore, onRetry }: ConversationListProps) {
   return (
     <section className={styles.root} aria-labelledby="history-title">
-      <h2 id="history-title" className={styles.title}>
-        Conversas
-      </h2>
-      <button type="button" className={`btn btn-secondary ${styles.new}`} onClick={onNew}>
-        Nova conversa
-        <Plus size={16} aria-hidden="true" />
-      </button>
+      <div className={styles.top}>
+        <button type="button" className={`btn btn-secondary ${styles.new}`} onClick={onNew} data-closes-sidebar>
+          <Plus size={16} aria-hidden="true" />
+          Nova sessão
+        </button>
+        <div className={styles.heading}>
+          <h2 id="history-title" className={styles.title}>
+            Sessões
+          </h2>
+          {state.status === "ready" ? <span className={styles.count}>{twoDigits(state.items.length)}</span> : null}
+        </div>
+      </div>
 
-      {state.status === "loading" ? <Skeleton lines={5} label="Carregando conversas…" /> : null}
+      {state.status === "loading" ? (
+        <div className={styles.pad}>
+          <Skeleton lines={3} block label="Carregando conversas…" />
+        </div>
+      ) : null}
 
-      {state.status === "empty" ? <p className={styles.empty}>Nenhuma conversa ainda. Faça sua primeira pergunta.</p> : null}
+      {state.status === "empty" ? <p className={`${styles.empty} ${styles.pad}`}>Nenhuma conversa ainda. Faça sua primeira pergunta.</p> : null}
 
       {state.status === "error" && state.error ? (
-        <StatusNotice
-          variant="error"
-          title={state.error.title}
-          actions={
-            <button type="button" className="btn btn-secondary" onClick={onRetry}>
-              Tentar novamente
-            </button>
-          }
-        >
-          {state.error.message}
-        </StatusNotice>
+        <div className={styles.pad}>
+          <StatusNotice
+            variant="error"
+            title={state.error.title}
+            actions={
+              <button type="button" className="btn btn-secondary" onClick={onRetry}>
+                Tentar novamente
+              </button>
+            }
+          >
+            {state.error.message}
+          </StatusNotice>
+        </div>
       ) : null}
 
       {state.status === "ready" ? (
-        <ul className={styles.list}>
-          {state.items.map((conversation) => (
-            <Item
-              key={conversation.id}
-              conversation={conversation}
-              current={conversation.id === currentId}
-              now={now}
-              preview={preview(conversation.id)}
-              onVisible={onVisible}
-              onOpen={onOpen}
-            />
-          ))}
-        </ul>
-      ) : null}
-
-      {state.status === "ready" && state.moreError ? <p className={styles.problem}>{state.moreError.title}. {state.moreError.message}</p> : null}
-
-      {state.status === "ready" && state.hasMore ? (
-        <button type="button" className={`btn btn-secondary ${styles.more}`} onClick={onLoadMore} aria-busy={state.loadingMore || undefined}>
-          {state.loadingMore ? "Carregando…" : "Carregar mais"}
-        </button>
+        <nav className={styles.nav} aria-label="Conversas">
+          <ul className={styles.list}>
+            {state.items.map((conversation, index) => (
+              <Item
+                key={conversation.id}
+                conversation={conversation}
+                number={twoDigits(state.items.length - index)}
+                current={conversation.id === currentId}
+                now={now}
+                preview={preview(conversation.id)}
+                onVisible={onVisible}
+                onOpen={onOpen}
+              />
+            ))}
+          </ul>
+          {state.moreError ? <p className={styles.problem}>{state.moreError.title}. {state.moreError.message}</p> : null}
+          {state.hasMore ? (
+            <button type="button" className={`btn btn-secondary ${styles.more}`} onClick={onLoadMore} aria-busy={state.loadingMore || undefined}>
+              {state.loadingMore ? "Carregando…" : "Carregar mais"}
+            </button>
+          ) : null}
+        </nav>
       ) : null}
     </section>
   );

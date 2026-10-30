@@ -1,6 +1,6 @@
 .root {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   align-items: center;
   justify-content: center;
   padding: var(--space-4);
@@ -12,13 +12,34 @@
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-6);
-  border: var(--rule) solid var(--color-text);
+  border: var(--rule-thin) solid var(--line);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.mark {
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+}
+
+.brandName {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 1.25rem;
 }
 
 .title {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.25rem;
 }
 
 .lead {

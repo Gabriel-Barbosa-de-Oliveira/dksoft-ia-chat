@@ -18,9 +18,11 @@ export function Thread({ turns, renderError }: ThreadProps) {
   return (
     <div className={styles.root}>
       <div ref={ref} className={styles.scroller} onScroll={onScroll} role="log" aria-label="Conversa" tabIndex={-1}>
-        {turns.map((turn) => (
-          <TurnView key={turn.key} turn={turn} renderError={renderError} />
-        ))}
+        <div className={styles.column}>
+          {turns.map((turn) => (
+            <TurnView key={turn.key} turn={turn} renderError={renderError} />
+          ))}
+        </div>
       </div>
       {!following ? (
         <button type="button" className={`btn btn-secondary ${styles.follow}`} onClick={scrollToEnd}>

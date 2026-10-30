@@ -11,7 +11,7 @@ test("sem chave, só a tela de acesso aparece", async () => {
   try {
     await page.getByRole("heading", { level: 1, name: "Acesso ao chat" }).waitFor();
     assert.equal(await page.getByLabel("Pergunta", { exact: true }).count(), 0);
-    assert.equal(await page.getByRole("heading", { name: "Conversas" }).count(), 0);
+    assert.equal(await page.getByRole("heading", { name: "Sessões" }).count(), 0);
   } finally {
     await page.context().close();
   }
@@ -32,7 +32,7 @@ test("chave errada mostra erro junto ao campo; chave certa entra", async () => {
 
     await field.fill(TEST_KEY);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await page.getByRole("heading", { level: 1, name: "Assistente DKSOFT" }).waitFor();
+    await page.locator("#conversa").waitFor();
   } finally {
     await page.context().close();
   }
@@ -43,7 +43,7 @@ test("a chave não aparece no DOM, na URL nem no localStorage; só dksoft.access
   try {
     await page.getByLabel("Chave de acesso").fill(TEST_KEY);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await page.getByRole("heading", { level: 1, name: "Assistente DKSOFT" }).waitFor();
+    await page.locator("#conversa").waitFor();
 
     assert.ok(!(await page.content()).includes(TEST_KEY), "chave no HTML");
     assert.ok(!page.url().includes(TEST_KEY), "chave na URL");

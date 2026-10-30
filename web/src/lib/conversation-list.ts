@@ -13,6 +13,14 @@ export interface ConversationListState {
   moreError: UserError | null;
 }
 
+export type ConnectionStatus = "connecting" | "connected" | "offline";
+
+/** A lista é a primeira chamada à API, então o estado dela indica se o chat alcança o servidor. */
+export function connectionStatus(status: ConversationListState["status"]): ConnectionStatus {
+  if (status === "loading") return "connecting";
+  return status === "error" ? "offline" : "connected";
+}
+
 export type ConversationListAction =
   | { type: "LOAD_START" }
   | { type: "LOAD_OK"; page: ConversationPage }

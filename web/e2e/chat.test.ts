@@ -85,7 +85,7 @@ test("Enter envia e Shift+Enter quebra a linha", async () => {
 
 test("rolar para cima durante a resposta mostra Ir para o fim", async () => {
   stack.api.setScenario("slow");
-  await withPage({ height: 420 }, async (page) => {
+  await withPage({ height: 280 }, async (page) => {
     await ask(page, "Texto longo");
     await expect(page.getByText("palavra8 ")).toBeVisible(8000);
     await page.locator('[role="log"]').evaluate((el) => (el.scrollTop = 0));

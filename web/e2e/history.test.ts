@@ -51,7 +51,7 @@ test("lista vazia mostra a próxima ação", async () => {
   stack.api.seed(0);
   await withPage({}, async (page) => {
     await expect(page.getByText("Nenhuma conversa ainda. Faça sua primeira pergunta.")).toBeVisible(5000);
-    await expect(page.getByRole("button", { name: "Nova conversa" })).toBeVisible(1000);
+    await expect(page.getByRole("button", { name: "Nova sessão" })).toBeVisible(1000);
   });
 });
 
@@ -96,12 +96,12 @@ test("primeira pergunta leva a /c/:id e recarregar reabre a mesma conversa (SC-0
   });
 });
 
-test("Nova conversa volta ao estado vazio e à raiz", async () => {
+test("Nova sessão volta ao estado vazio e à raiz", async () => {
   await withPage({}, async (page) => {
     await page.getByRole("link", { name: /número 1/ }).click();
     await expect(log(page).getByText("do assistente.")).toBeVisible(5000);
-    await page.getByRole("button", { name: "Nova conversa" }).click();
-    await expect(page.getByRole("heading", { name: "O que você quer saber?" })).toBeVisible(5000);
+    await page.getByRole("button", { name: "Nova sessão" }).click();
+    await expect(page.getByRole("heading", { name: "Como posso ajudar hoje?" })).toBeVisible(5000);
     assert.equal(new URL(page.url()).pathname, "/");
   });
 });
@@ -111,7 +111,7 @@ test("ids inválidos ou inexistentes mostram Conversa não encontrada", async ()
     await withPage({ path }, async (page) => {
       await expect(page.getByText("Conversa não encontrada")).toBeVisible(5000);
       await page.getByRole("button", { name: "Iniciar nova conversa" }).click();
-      await expect(page.getByRole("heading", { name: "O que você quer saber?" })).toBeVisible(5000);
+      await expect(page.getByRole("heading", { name: "Como posso ajudar hoje?" })).toBeVisible(5000);
       assert.equal(new URL(page.url()).pathname, "/");
     });
   }
@@ -119,16 +119,16 @@ test("ids inválidos ou inexistentes mostram Conversa não encontrada", async ()
 
 test("rota desconhecida redireciona para a raiz", async () => {
   await withPage({ path: "/qualquer/coisa" }, async (page) => {
-    await expect(page.getByRole("heading", { name: "O que você quer saber?" })).toBeVisible(5000);
+    await expect(page.getByRole("heading", { name: "Como posso ajudar hoje?" })).toBeVisible(5000);
     assert.equal(new URL(page.url()).pathname, "/");
   });
 });
 
 test("acionar uma sugestão só preenche o campo e foca nele", async () => {
   await withPage({}, async (page) => {
-    await page.getByRole("button", { name: "Quais pacotes estão disponíveis?" }).click();
+    await page.getByRole("button", { name: "Liste os pacotes disponíveis" }).click();
     const field = page.getByLabel("Pergunta", { exact: true });
-    assert.equal(await field.inputValue(), "Quais pacotes estão disponíveis?");
+    assert.equal(await field.inputValue(), "Liste os pacotes disponíveis");
     assert.equal(await field.evaluate((el) => el === document.activeElement), true);
     assert.equal(await page.locator("article").count(), 0);
   });

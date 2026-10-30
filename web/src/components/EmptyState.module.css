@@ -1,40 +1,74 @@
 .root {
-  display: flex;
+  min-height: 0;
   flex: 1;
+  overflow-y: auto;
+  padding: clamp(var(--space-6), 8vh, 6rem) var(--space-6) var(--space-8);
+}
+
+.column {
+  display: flex;
+  max-width: var(--width-content);
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-4);
-  overflow-y: auto;
+  margin-inline: auto;
+}
+
+.mark {
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
 }
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .lead {
+  max-width: 52ch;
   margin: 0;
-  max-width: 40rem;
+  color: var(--color-text-muted);
 }
 
 .list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
   gap: var(--space-3);
-  margin: 0;
+  margin: var(--space-2) 0 0;
   padding: 0;
   list-style: none;
 }
 
+.entry {
+  display: flex;
+}
+
 .card {
+  width: 100%;
   min-height: var(--target-min);
-  border: var(--rule-thin) solid var(--color-border-control);
+  padding: var(--space-4);
+  border: var(--rule-thin) solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
 }
 
 .card:hover {
-  border-color: var(--color-text);
+  border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+}
+
+@media (max-width: 47.4375rem) {
+  .root {
+    padding-inline: var(--space-4);
+  }
 }

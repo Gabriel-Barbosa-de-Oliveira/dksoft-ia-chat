@@ -31,7 +31,7 @@ test("servidor fora do ar: Sem conexão, pergunta de volta no campo e nova tenta
   await withPage({}, async (page) => {
     await stack.stopApi();
     await ask(page, "Pergunta sem servidor");
-    await expect(page.getByText("Sem conexão")).toBeVisible(5000);
+    await expect(page.locator("article").getByText("Sem conexão")).toBeVisible(5000);
     await expect(page.getByRole("button", { name: "Tentar novamente" }).last()).toBeVisible(1000);
     assert.equal(await field(page).inputValue(), "Pergunta sem servidor");
     await noLeaks(page);

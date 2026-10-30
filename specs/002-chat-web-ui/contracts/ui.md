@@ -23,12 +23,12 @@ Sem chave válida, qualquer rota mostra a tela de acesso; depois de entrar, a pe
 
 ### Chat
 
-Estrutura de pontos de referência: link "Pular para a conversa" → `header.nav` (marca, botão "Histórico" em tela estreita, alternância de tema, "Sair") → `aside` (histórico) → `main` (conversa) → compositor no pé de `main`.
+Layout de referência: `Chat DKSoft.dc.html` (Claude Design). Estrutura de pontos de referência: link "Pular para a conversa" → `aside` (marca, "Nova sessão", histórico, "Sair", aparência Claro/Escuro) → `main` (cabeçalho, conversa e compositor).
 
-- `h1` único da tela: "Assistente DKSOFT" (visível na barra de contexto de `main`). Títulos internos seguem `h2`/`h3` sem pular nível.
-- **Conversa** (`main`): lista de turnos. Cada turno é um bloco separado por régua de 2 px, com rótulo "Você" e rótulo "Assistente" (estilo `h6` do DS, alinhado à esquerda), sem balões.
-- **Compositor**: `textarea` rotulado "Pergunta" (cresce até 6 linhas), contador de caracteres a partir de 90 % do limite, botão principal "Enviar" (ícone `send` à direita do rótulo, rótulo alinhado à esquerda como manda o DS) e botão secundário "Parar" visível só durante a resposta. Slot reservado ao lado para um controle de voz futuro. `Enter` envia; `Shift+Enter` quebra linha; o atalho está descrito em texto de apoio ligado por `aria-describedby`.
-- **Histórico** (`aside`, "Conversas"): botão "Nova conversa" no topo, lista com a conversa aberta marcada por `aria-current="true"`, botão "Carregar mais" ao fim. Em tela estreita é uma folha `<dialog>` aberta pelo botão "Histórico".
+- `h1` único da tela: título da conversa aberta (primeira pergunta, prévia ou "Nova conversa"), no cabeçalho de `main`, com "Sessão NN" quando a conversa já está na lista e o estado da conexão ("Conectando…", "Conectado", "Sem conexão"), derivado da carga da lista de conversas. Títulos internos seguem `h2`/`h3` sem pular nível.
+- **Conversa** (`main`): coluna central de até 47,5 rem. A pergunta é um balão à direita; a resposta vem à esquerda, com marca do assistente. Os rótulos "Você" e "Assistente" continuam como `h3` só para leitores de tela.
+- **Compositor**: `textarea` rotulado "Pergunta" (rótulo `sr-only`, placeholder "Escreva uma mensagem…") (cresce até 6 linhas), contador de caracteres a partir de 90 % do limite, caixa flutuante com botão principal redondo "Enviar" (ícone `arrow-up`, nome acessível e `title`) e botão secundário redondo "Parar" visível só durante a resposta. Slot reservado ao lado para um controle de voz futuro. `Enter` envia; `Shift+Enter` quebra linha; o atalho está descrito em texto de apoio ligado por `aria-describedby`.
+- **Histórico** (`aside`, seção "Sessões"): botão "Nova sessão" no topo, contagem, `nav` "Conversas" com itens numerados (o mais recente tem o maior número), a conversa aberta marcada por `aria-current="true"`, botão "Carregar mais" ao fim. Abaixo de 47,5 rem é uma gaveta sobre o conteúdo, aberta pelo botão "Abrir sessões" e fechada por "Fechar menu", `Esc`, toque fora ou ao escolher uma conversa.
 
 ## Estados por componente
 
@@ -36,7 +36,7 @@ Toda parte que carrega dados trata os quatro estados (FR-020). O skeleton só ap
 
 | Componente | Carregando | Vazio | Erro | Sucesso |
 |------------|-----------|-------|------|---------|
-| Lista de conversas | 5 linhas-esqueleto no formato do item | "Nenhuma conversa ainda. Faça sua primeira pergunta." + botão "Nova conversa" | `StatusNotice` no painel + "Tentar novamente" (o chat segue utilizável) | Lista com data/hora e prévia |
+| Lista de conversas | 3 blocos-esqueleto no formato do item | "Nenhuma conversa ainda. Faça sua primeira pergunta." + botão "Nova sessão" | `StatusNotice` no painel + "Tentar novamente" (o chat segue utilizável) | Lista com data/hora e prévia |
 | Prévia de um item | Data e hora no lugar | n/a | Data e hora no lugar (falha silenciosa e isolada) | Trecho da primeira pergunta |
 | Histórico de uma conversa | Esqueleto de dois turnos | Conversa sem mensagens: estado vazio do chat | `StatusNotice` na área da conversa + "Tentar novamente" | Turnos em ordem |
 | Conversa não encontrada | n/a | n/a | `StatusNotice` "Conversa não encontrada" + "Iniciar nova conversa" | n/a |
@@ -45,13 +45,12 @@ Toda parte que carrega dados trata os quatro estados (FR-020). O skeleton só ap
 
 ## Estado vazio do chat (sem mensagens)
 
-`h2` "O que você quer saber?" e um parágrafo curto sobre o que o assistente consulta (alunos, pacotes, contas recebidas e pagas), seguido de **5 sugestões** como botões em `.card` clicáveis (cada um com nome acessível igual ao texto). Acionar uma sugestão **preenche o campo e foca nele, sem enviar** (FR-014). Textos (em `lib/suggestions.ts`, sem datas fixas):
+`h2` "Como posso ajudar hoje?" e um parágrafo curto sobre o que o assistente consulta (alunos, pacotes, parcelas, presenças, provas e contas), seguido de **4 sugestões** como botões clicáveis (cada um com nome acessível igual ao texto). Acionar uma sugestão **preenche o campo e foca nele, sem enviar** (FR-014). Textos (em `lib/suggestions.ts`, sem datas fixas):
 
 1. "Quais parcelas em aberto o aluno de matrícula 1234 tem?"
-2. "Quanto recebemos na última semana?"
-3. "Quais contas pagamos nos últimos 15 dias?"
-4. "Quais pacotes estão disponíveis?"
-5. "O que você consegue fazer?"
+2. "Liste os pacotes disponíveis"
+3. "Quanto recebemos de contas neste mês?"
+4. "Como está a frequência do aluno 1234?"
 
 ## Turno do assistente: elementos
 
@@ -103,7 +102,7 @@ O texto da resposta em si **não** é anunciado token a token.
 |----------|--------|--------|
 | Campo de pergunta | `Enter` / `Shift+Enter` | Envia / nova linha |
 | Durante a resposta | `Esc` com foco no compositor | Aciona "Parar" |
-| Folha de histórico e confirmação | `Esc` | Fecha (foco volta ao botão que abriu) |
+| Gaveta de histórico e confirmação | `Esc` | Fecha (foco volta ao botão que abriu) |
 | Lista de conversas | `Tab` entre itens, `Enter`/`Space` abre | Cada item é um botão/link nativo |
 | Qualquer tela | `Tab` / `Shift+Tab` | Ordem lógica: pular link → barra → histórico → conversa → compositor |
 
@@ -117,17 +116,16 @@ Foco visível em todo elemento interativo (`:focus-visible` do DS, 2 px de acent
 
 | Largura | Layout |
 |---------|--------|
-| 20 rem a < 48 rem | Uma coluna; histórico em folha; compositor fixo no pé; "Enviar" e "Parar" com 44 px de altura e rótulo visível |
-| 48 rem a < 64 rem | Uma coluna com mais respiro; histórico ainda em folha |
-| ≥ 64 rem | Duas colunas (histórico de 20 a 24 rem à esquerda), conversa à direita, régua de 2 px entre elas |
+| 20 rem a < 47,5 rem | Uma coluna; histórico em gaveta; compositor fixo no pé; "Enviar" e "Parar" com 44 px e nome acessível |
+| ≥ 47,5 rem | Duas colunas: barra lateral de 18 rem à esquerda e conversa centralizada à direita, separadas por linha de 1 px |
 
 Sem rolagem horizontal da página em nenhuma largura; só tabelas largas rolam, dentro do próprio bloco.
 
 ## Revisão visual contra o Modernist (checklist de aceite)
 
-- Cores, fontes, espaços e cantos vindos só de tokens; raio 0; réguas de 2 px entre seções e turnos.
-- Rótulos e títulos alinhados à esquerda, inclusive dentro dos botões largos.
-- Acento vermelho só no botão principal, no foco e em destaques pequenos; erro e aviso combinam moldura, ícone, rótulo e texto.
+- Cores, fontes, espaços e cantos vindos só de tokens; cantos arredondados pelos tokens `--radius-*`; linhas de 1 px (`--line`) entre seções, sem réguas entre turnos.
+- Rótulos e títulos alinhados à esquerda, inclusive dentro dos botões largos; botões do compositor são redondos e só de ícone.
+- Acento vermelho só no botão principal, no foco, nas marcas da interface e em destaques pequenos; erro e aviso combinam moldura, ícone, rótulo e texto.
 - Uma ação principal por tela: "Entrar" na tela de acesso; "Enviar" no chat.
 - Ícones Lucide, 16 a 20 px, `aria-hidden` quando decorativos e `aria-label` em botões só de ícone.
 - Nenhuma imagem fotográfica nesta spec (portanto, nada a passar por `.grayscale`).

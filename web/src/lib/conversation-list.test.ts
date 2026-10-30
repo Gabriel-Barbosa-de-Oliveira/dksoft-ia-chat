@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { conversationListReducer, initialList, type ConversationListAction } from "./conversation-list.ts";
+import { connectionStatus, conversationListReducer, initialList, type ConversationListAction } from "./conversation-list.ts";
 import { toUserError } from "./errors.ts";
 import { conversationsFull, conversationsShort } from "./__fixtures__/http.ts";
 
@@ -54,4 +54,11 @@ test("REFRESH_OK troca os itens sem passar por loading", () => {
 test("LOAD_MORE_START duplicado não muda o estado", () => {
   const s = run([{ type: "LOAD_OK", page: conversationsFull }, { type: "LOAD_MORE_START" }]);
   assert.equal(conversationListReducer(s, { type: "LOAD_MORE_START" }), s);
+});
+
+test("connectionStatus deriva do estado da lista", () => {
+  assert.equal(connectionStatus("loading"), "connecting");
+  assert.equal(connectionStatus("ready"), "connected");
+  assert.equal(connectionStatus("empty"), "connected");
+  assert.equal(connectionStatus("error"), "offline");
 });

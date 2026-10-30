@@ -1,5 +1,5 @@
 .root {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -16,7 +16,7 @@
 .root h3,
 .root h4 {
   margin: var(--space-4) 0 var(--space-2);
-  font-size: 1.0625rem;
+  font-size: 1rem;
 }
 
 .root ul,
@@ -30,6 +30,7 @@
   font-size: 0.875em;
   background: var(--color-surface);
   padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
 }
 
 .root pre {
@@ -37,7 +38,8 @@
   padding: var(--space-3);
   overflow-x: auto;
   background: var(--color-surface);
-  border: var(--rule-thin) solid var(--color-divider);
+  border: var(--rule-thin) solid var(--line);
+  border-radius: var(--radius-md);
 }
 
 .root pre code {
@@ -48,7 +50,7 @@
 .root blockquote {
   margin: 0 0 var(--space-3);
   padding-left: var(--space-3);
-  border-left: var(--rule) solid var(--color-divider);
+  border-left: var(--rule) solid var(--line);
 }
 
 .tableWrap {

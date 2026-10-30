@@ -26,6 +26,10 @@ export function AccessGate({ onSubmit, validating, error, reason = null }: Acces
   return (
     <main className={styles.root}>
       <form className={styles.panel} onSubmit={submit} noValidate>
+        <div className={styles.brand}>
+          <span className={styles.mark} aria-hidden="true" />
+          <span className={styles.brandName}>DKSoft IA</span>
+        </div>
         <h1 className={styles.title}>Acesso ao chat</h1>
         <p className={styles.lead}>A chave de acesso é fornecida pela DKSOFT. Ela fica só nesta aba do navegador.</p>
         {reason === "session" ? (

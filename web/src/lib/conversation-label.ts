@@ -8,6 +8,16 @@ export function previewOf(text: string, max = 60): string {
   return `${cut.trimEnd()}…`;
 }
 
+/** Numeração das sessões: "01", "02"… */
+export const twoDigits = (n: number): string => String(n).padStart(2, "0");
+
+/** Título da conversa aberta: a primeira pergunta, a prévia guardada ou um rótulo genérico. */
+export function conversationTitle(id: string | null, firstQuestion: string | undefined, preview: string | null | undefined): string {
+  if (firstQuestion !== undefined) return previewOf(firstQuestion, 48);
+  if (id === null) return "Nova conversa";
+  return preview ?? "Conversa";
+}
+
 interface DayParts {
   year: number;
   month: number;

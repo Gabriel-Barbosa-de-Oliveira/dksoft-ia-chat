@@ -27,17 +27,17 @@ function render(state: ConversationListState, over: Partial<ConversationListProp
   );
 }
 
-test("carregando: esqueleto de 5 linhas e botão Nova conversa", () => {
+test("carregando: esqueleto de 3 blocos e botão Nova sessão", () => {
   const html = render(initialList);
-  assert.equal((html.match(/class="bar"/g) ?? []).length, 5);
-  assert.match(html, /Nova conversa/);
-  assert.match(html, />Conversas</);
+  assert.equal((html.match(/class="bar block"/g) ?? []).length, 3);
+  assert.match(html, /Nova sessão/);
+  assert.match(html, />Sessões</);
 });
 
 test("vazio: mensagem com a próxima ação", () => {
   const html = render({ ...initialList, status: "empty" });
   assert.match(html, /Nenhuma conversa ainda\. Faça sua primeira pergunta\./);
-  assert.match(html, /Nova conversa/);
+  assert.match(html, /Nova sessão/);
 });
 
 test("erro: aviso no painel com Tentar novamente", () => {
