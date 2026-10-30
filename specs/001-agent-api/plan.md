@@ -43,7 +43,7 @@ Abordagem técnica (detalhes e evidências em [research.md](./research.md)):
 |-----------|-----------|---------------------|
 | I. Camadas Explícitas | Passa | `http` (controllers) → `services` → `store`/`agent` (IO). `domain` puro e sem IO |
 | II. Validação na Fronteira | Passa | zod no corpo HTTP, nas variáveis de ambiente, nos eventos SSE e no JSON de resultado das tools antes do `shapeToolResult` |
-| III. Erros de Domínio | Passa | Classes (`ConversationNotFoundError`, `UnauthorizedError`, `ChatTimeoutError`, `ModelUnavailableError`, `ToolsUnavailableError`, `PeriodTooLongError`) traduzidas só em `http/errors.ts` e no emissor de eventos de erro |
+| III. Erros de Domínio | Passa | Classes (`ConversationNotFoundError`, `UnauthorizedError`, `ChatTimeoutError`, `ModelUnavailableError`, `ToolsUnavailableError`, `PeriodTooLongError`) traduzidas só na borda: `http/errors.ts` (status HTTP e `toStreamError` para o evento `error`); o serviço propaga o erro de domínio |
 | IV. Funções Puras | Passa | `loadConfig`, `splitPeriod`, `shapeToolResult`, `maskPii`, `formatSseEvent`, `isTransientModelError`, comparação de chave, núcleo do limitador (relógio injetado) |
 | V. Teste Obrigatório | Passa | Modelos falsos no padrão dos spikes; tools falsas; SQLite `:memory:`; nenhum teste usa rede. Pre-commit: typecheck + test |
 | VI. Segurança por Padrão | Passa | Chaves só no backend; filho recebe só `BASE_URL`/`API_TOKEN`/`PATH`; allowlist somente leitura; chave de acesso com `timingSafeEqual`; CORS exato; logs mascarados |

@@ -112,7 +112,7 @@ Quando o modelo principal está indisponível ou lento, o sistema tenta de novo 
 - **FR-008**: O sistema MUST exigir uma chave de acesso em toda chamada ao chat e recusar chamadas sem chave ou com chave incorreta antes de qualquer consulta.
 - **FR-009**: O sistema MUST aceitar chamadas de navegador somente de origens autorizadas.
 - **FR-010**: O sistema MUST NOT expor o token da API DKSOFT nem a chave do provedor de modelo em respostas, eventos ou registros.
-- **FR-011**: O sistema MUST mascarar CPF, e-mail e telefone de alunos nos registros de funcionamento.
+- **FR-011**: O sistema MUST mascarar CPF, e-mail e telefone de alunos nos registros de funcionamento e só enviar dados de contato ao provedor de modelo quando a consulta for de um aluno específico (listagens não os carregam).
 - **FR-012**: O sistema MUST validar toda entrada externa (corpo da chamada, configuração e respostas da API DKSOFT e do provedor de modelo) e traduzir falhas previsíveis em erros claros para a pessoa.
 - **FR-013**: O sistema MUST tentar de novo falhas temporárias do modelo, usar o modelo de reserva quando configurado e não repetir tentativas em falhas permanentes.
 - **FR-014**: O sistema MUST respeitar os limites da API DKSOFT: período financeiro de até 30 dias por consulta, 60 requisições por minuto e 5 consultas simultâneas.
@@ -140,7 +140,7 @@ Quando o modelo principal está indisponível ou lento, o sistema tenta de novo 
 - **SC-002**: Em um conjunto de verificação com dados de teste conhecidos, 100% dos totais e quantidades citados nas respostas batem com o que a API devolveu.
 - **SC-003**: Em um conjunto de 10 conversas de duas perguntas, pelo menos 9 perguntas de acompanhamento são respondidas corretamente sem a pessoa repetir o contexto.
 - **SC-004**: 100% das chamadas sem chave ou com chave incorreta são recusadas sem gerar nenhuma consulta à API nem ao modelo.
-- **SC-005**: Em 100% dos casos inspecionados, respostas, eventos e registros não contêm o token da API DKSOFT, a chave do provedor de modelo nem CPF, e-mail ou telefone em claro.
+- **SC-005**: Em 100% dos casos inspecionados, o token da API DKSOFT e a chave do provedor de modelo não aparecem em respostas, eventos nem registros, e CPF, e-mail e telefone não aparecem em claro nos registros de funcionamento nem nos eventos de erro (a resposta ao usuário pode trazê-los quando ele pedir um aluno específico).
 - **SC-006**: Com o modelo principal indisponível, pelo menos 95% das perguntas de teste ainda recebem resposta pelo modelo de reserva.
 - **SC-007**: Pedidos financeiros de até 90 dias são respondidos sem erro de período em 100% dos casos de teste.
 - **SC-008**: Toda pergunta termina com resultado explícito (resposta completa, erro claro ou aviso de tempo esgotado), nunca em silêncio.
