@@ -1,9 +1,10 @@
 import { MCPAdapter } from "@langchain/mcp-adapters"
 import { loadConfig } from "./config.ts"
 import { createApp } from "./http/app.ts"
-import { createAgentRunner } from "./agent/agent.ts"
+import { createProductionAgent } from "./agent/agent.ts"
 import { createChatModel } from "./agent/model.ts"
 import { buildMcpServers, loadTools } from "./agent/tools.ts"
+import { createLimiter } from "./services/limiter.ts"
 import { createChatService } from "./services/chat.service.ts"
 import { createConversationLock } from "./services/conversation-lock.ts"
 import { openDatabase } from "./store/db.ts"
@@ -29,10 +30,12 @@ async function main() {
     }
 
     const conversations = createSqliteConversationStore(db)
-    const agent = createAgentRunner({
+    const agent = createProductionAgent({
         model: createChatModel(config.model, config.openrouterApiKey),
         modelName: config.model,
-        tools,
+        fallbackModel: config.fallbackModel ? createChatModel(config.fallbackModel, config.openrouterApiKey) : undefined,
+        mcpTools: tools,
+        limiter: createLimiter({ maxConcurrent: config.maxConcurrency, perMinute: config.maxPerMinute }),
         limits: { maxRows: config.toolResultMaxRows, maxChars: 24000 },
     })
     const chat = createChatService({

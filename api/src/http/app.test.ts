@@ -25,3 +25,29 @@ test("unknown route returns JSON 404 with requestId", async () => {
     assert.equal(res.json().requestId, res.headers["x-request-id"])
     await app.close()
 })
+
+test("rate limit on POST /chat → 429 with retryAfterSeconds, after auth", async () => {
+    const { buildTestApp, auth } = await import("./test-app.ts")
+    const t = await buildTestApp({ rateLimit: 2 })
+    const call = (headers: Record<string, string>) => t.app.inject({ method: "POST", url: "/chat", headers, payload: { message: "oi" } })
+    assert.equal((await call(auth)).statusCode, 200)
+    assert.equal((await call(auth)).statusCode, 200)
+    const limited = await call(auth)
+    assert.equal(limited.statusCode, 429)
+    assert.equal(limited.json().error, "rate_limited")
+    assert.ok(limited.json().retryAfterSeconds >= 1)
+    assert.equal((await t.app.inject({ method: "GET", url: "/health" })).statusCode, 200)
+    await t.app.close()
+})
+
+test("hook order: preflight needs no Authorization; wrong key is 401 before rate limit", async () => {
+    const { buildTestApp, ORIGIN } = await import("./test-app.ts")
+    const t = await buildTestApp({ rateLimit: 1 })
+    const pre = await t.app.inject({ method: "OPTIONS", url: "/chat", headers: { origin: ORIGIN, "access-control-request-method": "POST" } })
+    assert.equal(pre.statusCode, 204)
+    for (let i = 0; i < 3; i++) {
+        const r = await t.app.inject({ method: "POST", url: "/chat", headers: { authorization: "Bearer x" }, payload: { message: "oi" } })
+        assert.equal(r.statusCode, 401)
+    }
+    await t.app.close()
+})

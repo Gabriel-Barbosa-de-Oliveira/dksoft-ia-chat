@@ -17,6 +17,8 @@ test("classifyAgentError with real-shaped errors", () => {
     assert.ok(classifyAgentError(Object.assign(new Error("401"), { status: 401 })) instanceof ModelUnavailableError)
     assert.ok(classifyAgentError(Object.assign(new Error("HTTP 429"), { name: "ToolException" })) instanceof ToolsUnavailableError)
     assert.ok(classifyAgentError(Object.assign(new Error("t"), { name: "TimeoutError" })) instanceof ChatTimeoutError)
+    const wrapped = Object.assign(new Error("wrapper"), { cause: Object.assign(new Error("503"), { status: 503 }) })
+    assert.ok(classifyAgentError(wrapped) instanceof ModelUnavailableError)
     const abort = Object.assign(new Error("a"), { name: "AbortError" })
     assert.equal(classifyAgentError(abort), abort)
     const plain = new Error("bug")
