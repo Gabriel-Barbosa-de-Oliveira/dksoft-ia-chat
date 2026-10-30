@@ -12,8 +12,8 @@ export function toHttpError(err: unknown, requestId: string): { status: number; 
     if (err instanceof UnauthorizedError) return { status: 401, body: { requestId, error: "unauthorized" } }
     if (err instanceof OriginNotAllowedError) return { status: 403, body: { requestId, error: "origin_not_allowed" } }
     if (err instanceof ConversationNotFoundError) return { status: 404, body: { requestId, error: "conversation_not_found", conversationId: err.conversationId } }
-    const e = err as { statusCode?: number; code?: string }
-    if (e?.statusCode === 429) return { status: 429, body: { requestId, error: "rate_limited" } }
+    const e = err as { statusCode?: number; code?: string; retryAfterSeconds?: number }
+    if (e?.statusCode === 429) return { status: 429, body: { requestId, error: "rate_limited", retryAfterSeconds: e.retryAfterSeconds ?? 60 } }
     if (e?.statusCode === 400 || e?.code === "FST_ERR_CTP_INVALID_MEDIA_TYPE") return { status: 400, body: { requestId, error: "invalid_body" } }
     return { status: 500, body: { requestId, error: "internal_error" } }
 }
