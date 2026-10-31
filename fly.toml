@@ -1,0 +1,38 @@
+# Backend (api + MCP) no Fly.io. Veja DEPLOY.md.
+# Troque `app` por um nome único antes do `fly launch --copy-config`.
+app = "dksoft-ia-chat-api"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# Só valores não secretos. Segredos entram com `fly secrets set` (veja DEPLOY.md).
+[env]
+  PORT = "3000"
+  CHAT_DB = "/data/chat.db"
+  BASE_URL = "https://dkapi.dksoft.com.br/api/v1"
+  # Atrás do proxy do Fly o IP real vem em X-Forwarded-For; sem isto o rate limit é global.
+  TRUST_PROXY = "true"
+
+# SQLite precisa de disco persistente, o que limita o app a UMA máquina.
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

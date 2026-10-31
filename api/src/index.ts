@@ -44,6 +44,7 @@ async function main() {
     })
     const app = await createApp({
         chat, conversations, accessKey: config.accessKey, corsOrigins: config.corsOrigins, chatRateLimitPerMin: config.chatRateLimitPerMin,
+        trustProxy: config.trustProxy,
     })
 
     const shutdown = async () => {

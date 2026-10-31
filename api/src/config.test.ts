@@ -31,3 +31,9 @@ test("rejects bad values without echoing secrets", () => {
 test("cors origins parsed", () => {
     assert.deepEqual(loadConfig({ ...base, CHAT_CORS_ORIGINS: "http://a.com, http://b.com" }).corsOrigins, ["http://a.com", "http://b.com"])
 })
+
+test("trustProxy defaults to false and accepts only true/false", () => {
+    assert.equal(loadConfig(base).trustProxy, false)
+    assert.equal(loadConfig({ ...base, TRUST_PROXY: "true" }).trustProxy, true)
+    assert.throws(() => loadConfig({ ...base, TRUST_PROXY: "yes" }), /TRUST_PROXY/)
+})
