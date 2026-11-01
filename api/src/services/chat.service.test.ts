@@ -131,3 +131,47 @@ test("unknown failure is propagated and recorded as error", async () => {
     await assert.rejects(drain(service.start({ message: "q" }).events), /bug/)
     assert.equal(runs(db)[0]!.error_type, "Error")
 })
+
+const U = "11111111-1111-4111-8111-111111111111"
+const chartSpec = { id: U, type: "bar" as const, title: "t", valueKind: "integer" as const, categories: ["a"], series: [{ name: "s", values: [1] }], summary: "r", resultId: U, partial: false }
+const fileDesc = { id: U, conversationId: U, resultId: U, name: "a.pdf", format: "pdf" as const, mime: "application/pdf", sizeBytes: 1, rowCount: 1, includesChart: false, containsFullPersonalData: false, createdAt: "x", expiresAt: "y", downloadPath: "/p" }
+const withArtifacts = (final: AgentEvent[] = []): Script => async function* () {
+    yield { type: "tool", phase: "end", name: "dksoft_list_paid_bills", ok: true }
+    yield { type: "result", result: { resultId: U, label: "l", rows: 2, totalRows: 2, capped: false, expiresAt: "z" } }
+    yield { type: "chart", chart: chartSpec }
+    yield { type: "file", file: fileDesc }
+    yield { type: "token", text: "pronto" }
+    for (const e of final) yield e
+    yield { type: "end", model: "m1", partial: false, toolCalls: 1 }
+}
+
+test("result, chart and file events are forwarded in order; only charts are persisted, and only on done", async () => {
+    const seen: AgentInput[] = []
+    const { service, conversations } = setup(withArtifacts(), { seen })
+    const run = service.start({ message: "oi" })
+    const events = await drain(run.events)
+    assert.deepEqual(events.map((e) => e.event), ["meta", "tool", "result", "chart", "file", "token", "done"])
+    assert.equal(seen[0]!.conversationId, run.conversationId)
+    assert.equal(seen[0]!.requestId, run.requestId)
+    const msgs = conversations.listMessages(run.conversationId)
+    assert.deepEqual(msgs[1]!.charts?.map((c) => c.id), [U])
+    assert.equal(JSON.stringify(msgs).includes("a.pdf"), false, "files are never persisted")
+})
+test("when the run fails after a chart nothing is persisted", async () => {
+    const script: Script = async function* () {
+        yield { type: "chart", chart: chartSpec }
+        yield { type: "token", text: "parcial" }
+        throw new ModelUnavailableError()
+    }
+    const { service, conversations } = setup(script)
+    const run = service.start({ message: "oi" })
+    await assert.rejects(drain(run.events), ModelUnavailableError)
+    assert.equal(conversations.listMessages(run.conversationId).length, 0)
+})
+test("without artifacts the flow and the stored rows are exactly as before", async () => {
+    const { service, conversations } = setup(answer("Olá mundo"))
+    const run = service.start({ message: "oi" })
+    const events = await drain(run.events)
+    assert.deepEqual(events.map((e) => e.event).filter((e) => ["result", "chart", "file"].includes(e)), [])
+    assert.equal(conversations.listMessages(run.conversationId)[1]!.charts, undefined)
+})

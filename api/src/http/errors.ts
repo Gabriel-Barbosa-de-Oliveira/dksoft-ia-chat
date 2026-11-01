@@ -1,7 +1,7 @@
 import { ZodError } from "zod"
 import {
-    ChatTimeoutError, ConversationNotFoundError, ModelUnavailableError, OriginNotAllowedError,
-    ToolsUnavailableError, UnauthorizedError,
+    ChartNotFoundError, ChatTimeoutError, ConversationNotFoundError, ExportBusyError, ExportTimeoutError, ExportTooLargeError, FileNotFoundError, ModelUnavailableError,
+    NothingToExportError, OriginNotAllowedError, ResultNotFoundError, ToolsUnavailableError, UnauthorizedError,
 } from "../domain/errors.ts"
 import type { StreamErrorCode } from "../domain/events.ts"
 
@@ -12,6 +12,13 @@ export function toHttpError(err: unknown, requestId: string): { status: number; 
     if (err instanceof UnauthorizedError) return { status: 401, body: { requestId, error: "unauthorized" } }
     if (err instanceof OriginNotAllowedError) return { status: 403, body: { requestId, error: "origin_not_allowed" } }
     if (err instanceof ConversationNotFoundError) return { status: 404, body: { requestId, error: "conversation_not_found", conversationId: err.conversationId } }
+    if (err instanceof ResultNotFoundError) return { status: 404, body: { requestId, error: "result_not_found" } }
+    if (err instanceof ChartNotFoundError) return { status: 404, body: { requestId, error: "chart_not_found" } }
+    if (err instanceof FileNotFoundError) return { status: 404, body: { requestId, error: "file_not_found" } }
+    if (err instanceof ExportTooLargeError) return { status: 413, body: { requestId, error: "export_too_large", rows: err.rows, maxRows: err.maxRows } }
+    if (err instanceof NothingToExportError) return { status: 422, body: { requestId, error: "nothing_to_export" } }
+    if (err instanceof ExportBusyError) return { status: 429, body: { requestId, error: "export_busy", retryAfterSeconds: err.retryAfterSeconds } }
+    if (err instanceof ExportTimeoutError) return { status: 504, body: { requestId, error: "export_timeout" } }
     const e = err as { statusCode?: number; code?: string; retryAfterSeconds?: number }
     if (e?.statusCode === 429) return { status: 429, body: { requestId, error: "rate_limited", retryAfterSeconds: e.retryAfterSeconds ?? 60 } }
     if (e?.statusCode === 400 || e?.code === "FST_ERR_CTP_INVALID_MEDIA_TYPE") return { status: 400, body: { requestId, error: "invalid_body" } }

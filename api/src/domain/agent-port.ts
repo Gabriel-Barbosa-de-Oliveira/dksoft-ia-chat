@@ -13,7 +13,7 @@ export type AgentEvent =
     | { type: "token"; text: string }
     | { type: "end"; model: string | null; partial: boolean; toolCalls: number }
 
-export type AgentInput = { history: ChatTurn[]; message: string; signal: AbortSignal; conversationId?: string }
+export type AgentInput = { history: ChatTurn[]; message: string; signal: AbortSignal; conversationId?: string; requestId?: string }
 
 // contract between services/ and agent/
 export interface AgentRunner {

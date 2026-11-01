@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto"
 import type { AgentRunner } from "../domain/agent-port.ts"
+import type { ChartSpec } from "../domain/chart-spec.ts"
 import { ChatTimeoutError, ConversationNotFoundError } from "../domain/errors.ts"
 import type { StreamEvent } from "../domain/events.ts"
 import { classifyAgentError } from "../domain/model-errors.ts"
@@ -53,13 +54,17 @@ export function createChatService(deps: ChatServiceDeps) {
                     const signal = AbortSignal.any([timeoutSignal, clientSignal])
                     const history = deps.conversations.lastMessages(conversationId, deps.historyLimit)
                     let answer = ""
+                    const charts: ChartSpec[] = []
                     let partial = false
                     try {
-                        for await (const ev of deps.agent.run({ history, message: input.message, signal })) {
+                        for await (const ev of deps.agent.run({ history, message: input.message, signal, conversationId, requestId })) {
                             if (ev.type === "token") { answer += ev.text; yield { event: "token", data: { text: ev.text } } }
                             else if (ev.type === "tool") {
                                 yield { event: "tool", data: { phase: ev.phase, name: ev.name, label: toolLabel(ev.name), ...(ev.ok !== undefined ? { ok: ev.ok } : {}) } }
-                            } else if (ev.type === "end") { modelUsed = ev.model; partial = ev.partial; toolCalls = ev.toolCalls }
+                            } else if (ev.type === "result") { yield { event: "result", data: ev.result } }
+                            else if (ev.type === "chart") { charts.push(ev.chart); yield { event: "chart", data: { chart: ev.chart } } }
+                            else if (ev.type === "file") { yield { event: "file", data: { file: ev.file } } }
+                            else if (ev.type === "end") { modelUsed = ev.model; partial = ev.partial; toolCalls = ev.toolCalls }
                         }
                     } catch (err) {
                         if (clientSignal.aborted) { outcome = "aborted"; return }
@@ -69,7 +74,7 @@ export function createChatService(deps: ChatServiceDeps) {
                     if (clientSignal.aborted) { outcome = "aborted"; return }
                     if (timeoutSignal.aborted) throw new ChatTimeoutError()
                     if (answer.trim() === "") throw new Error("empty answer")
-                    deps.conversations.appendPair(conversationId, input.message, answer)
+                    deps.conversations.appendPair(conversationId, input.message, answer, charts.length ? { charts } : undefined)
                     outcome = "ok"
                     yield { event: "done", data: { requestId, conversationId, model: modelUsed, durationMs: now() - startedMs, partial } }
                 } catch (err) {

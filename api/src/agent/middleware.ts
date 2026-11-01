@@ -4,7 +4,10 @@ import { maskPii } from "../domain/mask-pii.ts"
 import { isTransientModelError } from "../domain/model-errors.ts"
 import type { Limiter } from "../services/limiter.ts"
 import { ToolMessage } from "@langchain/core/messages"
+import { extractRows } from "../domain/extract-rows.ts"
+import { describeResult } from "../domain/result-label.ts"
 import { shapeToolResult, type ShapeLimits } from "../domain/shape-result.ts"
+import type { ResultStore } from "../services/result-store.repository.ts"
 
 export type RunTracker = { partial: boolean; toolCalls: number; model: string | null }
 
@@ -19,8 +22,14 @@ function contentToText(content: ToolMessage["content"]): string | undefined {
     return undefined
 }
 
-// bounds every tool result before it reaches the model (exact totals, row cut, partial flag)
-export function shapeResultsMiddleware(limits: ShapeLimits, tracker: RunTracker) {
+// where the full records of a successful query are kept (the model only ever sees the bounded summary)
+export type ResultCapture = { conversationId: string; results: ResultStore; newId: () => string }
+
+export type ResultArtifact = { kind: "result"; resultId: string; label: string; rows: number; totalRows: number; capped: boolean; expiresAt: string }
+
+// bounds every tool result before it reaches the model (exact totals, row cut, partial flag);
+// with `capture`, also stores the complete records and attaches a `result` artifact to the ToolMessage
+export function shapeResultsMiddleware(limits: ShapeLimits, tracker: RunTracker, capture?: ResultCapture) {
     return createMiddleware({
         name: "ShapeResults",
         wrapToolCall: async (request, handler) => {
@@ -29,15 +38,30 @@ export function shapeResultsMiddleware(limits: ShapeLimits, tracker: RunTracker)
             if (!ToolMessage.isInstance(result) || result.status === "error") return result
             const raw = contentToText(result.content)
             if (raw === undefined) return result
-            const shaped = shapeToolResult(request.toolCall.name, raw, limits)
+            let artifact: unknown = result.artifact
+            let resultId: string | undefined
+            if (capture) {
+                const extracted = extractRows(raw)
+                if (extracted && extracted.rows.length > 0) {
+                    const { label, filters } = describeResult(request.toolCall.name, request.toolCall.args)
+                    const stored = capture.results.save({
+                        id: capture.newId(), conversationId: capture.conversationId, toolName: request.toolCall.name, label, filters,
+                        rows: extracted.rows, totalRows: extracted.rows.length,
+                    })
+                    resultId = stored.id
+                    const notice: ResultArtifact = { kind: "result", resultId: stored.id, label, rows: stored.rows.length, totalRows: stored.totalRows, capped: stored.capped, expiresAt: stored.expiresAt }
+                    artifact = notice
+                }
+            }
+            const shaped = shapeToolResult(request.toolCall.name, raw, limits, resultId ? { resultId } : undefined)
             if (shaped.truncated) tracker.partial = true
-            return new ToolMessage({ content: shaped.text, tool_call_id: result.tool_call_id, name: result.name, status: result.status, ...(result.artifact !== undefined ? { artifact: result.artifact } : {}) })
+            return new ToolMessage({ content: shaped.text, tool_call_id: result.tool_call_id, name: result.name, status: result.status, ...(artifact !== undefined ? { artifact } : {}) })
         },
     })
 }
 
 // tools that call the MCP tool once per window already take a limiter slot per window (no nested slots)
-export const LIMITER_EXEMPT_TOOLS: readonly string[] = ["financeiro_contas_pagas_periodo", "financeiro_contas_recebidas_periodo"]
+export const LIMITER_EXEMPT_TOOLS: readonly string[] = ["financeiro_contas_pagas_periodo", "financeiro_contas_recebidas_periodo", "resultados_disponiveis", "gerar_grafico", "exportar_arquivo"]
 
 export type ResilienceOptions = { fallbackModel?: BaseChatModel | undefined; modelRetryDelayMs?: number; toolRetryDelayMs?: number }
 
