@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Copy, LoaderCircle } from "lucide-react";
 import { useAnnouncer } from "../hooks/useAnnouncer.ts";
 import type { Turn } from "../lib/chat-reducer.ts";
+import { ChartView } from "./ChartView.tsx";
 import { FileCard } from "./FileCard.tsx";
 import { Markdown } from "./Markdown.tsx";
 import { StatusNotice } from "./StatusNotice.tsx";
@@ -79,6 +80,9 @@ export function TurnView({ turn, renderError, canCopy }: TurnViewProps) {
               Ela não será guardada no histórico.
             </StatusNotice>
           ) : null}
+          {turn.charts.map((chart) => (
+            <ChartView key={chart.id} chart={chart} />
+          ))}
           {turn.files.map((file) => (
             <FileCard key={file.id} file={file} chartId={turn.charts[0]?.id} />
           ))}

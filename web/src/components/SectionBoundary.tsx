@@ -4,6 +4,8 @@ import { ErrorPanel } from "./ErrorPanel.tsx";
 
 interface Props {
   children: ReactNode;
+  /** Em vez do painel de erro: o que mostrar se a seção falhar (`null` = some em silêncio). */
+  fallback?: ReactNode;
 }
 interface State {
   failed: boolean;
@@ -23,6 +25,7 @@ export class SectionBoundary extends Component<Props, State> {
 
   render(): ReactNode {
     if (this.state.failed) {
+      if (this.props.fallback !== undefined) return this.props.fallback;
       return (
         <ErrorPanel
           error={toUserError({ source: "client", kind: "unexpected_response" })}
