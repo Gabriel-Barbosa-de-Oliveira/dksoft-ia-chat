@@ -24,6 +24,16 @@ const EnvSchema = z.object({
     CHAT_RATE_LIMIT_PER_MIN: int(1).default(30),
     MCP_ENTRY: z.string().default("../mcp/src/index.ts"),
     TRUST_PROXY: z.enum(["true", "false"]).default("false"),
+    ARTIFACTS_ENABLED: z.enum(["true", "false"]).default("true"),
+    RESULT_TTL_MS: int(1).default(3600000),
+    RESULT_MAX_ROWS: int(1).default(20000),
+    RESULT_STORE_MAX_MB: int(1).default(64),
+    EXPORT_TTL_MS: int(1).default(1800000),
+    EXPORT_MAX_ROWS: int(1).default(5000),
+    EXPORT_TIMEOUT_MS: int(1).default(30000),
+    EXPORT_MAX_CONCURRENCY: int(1).default(2),
+    FILE_STORE_MAX_MB: int(1).default(96),
+    EXPORT_RATE_LIMIT_PER_MIN: int(1).default(20),
 })
 
 export type AppConfig = {
@@ -44,6 +54,16 @@ export type AppConfig = {
     chatRateLimitPerMin: number
     mcpEntry: string
     trustProxy: boolean
+    artifactsEnabled: boolean
+    resultTtlMs: number
+    resultMaxRows: number
+    resultStoreMaxMb: number
+    exportTtlMs: number
+    exportMaxRows: number
+    exportTimeoutMs: number
+    exportMaxConcurrency: number
+    fileStoreMaxMb: number
+    exportRateLimitPerMin: number
 }
 
 // pure: validates the environment and never echoes secret values in errors
@@ -73,5 +93,15 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
         chatRateLimitPerMin: e.CHAT_RATE_LIMIT_PER_MIN,
         mcpEntry: e.MCP_ENTRY,
         trustProxy: e.TRUST_PROXY === "true",
+        artifactsEnabled: e.ARTIFACTS_ENABLED === "true",
+        resultTtlMs: e.RESULT_TTL_MS,
+        resultMaxRows: e.RESULT_MAX_ROWS,
+        resultStoreMaxMb: e.RESULT_STORE_MAX_MB,
+        exportTtlMs: e.EXPORT_TTL_MS,
+        exportMaxRows: e.EXPORT_MAX_ROWS,
+        exportTimeoutMs: e.EXPORT_TIMEOUT_MS,
+        exportMaxConcurrency: e.EXPORT_MAX_CONCURRENCY,
+        fileStoreMaxMb: e.FILE_STORE_MAX_MB,
+        exportRateLimitPerMin: e.EXPORT_RATE_LIMIT_PER_MIN,
     }
 }

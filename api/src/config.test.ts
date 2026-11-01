@@ -37,3 +37,28 @@ test("trustProxy defaults to false and accepts only true/false", () => {
     assert.equal(loadConfig({ ...base, TRUST_PROXY: "true" }).trustProxy, true)
     assert.throws(() => loadConfig({ ...base, TRUST_PROXY: "yes" }), /TRUST_PROXY/)
 })
+
+test("artifact settings default to the plan values", () => {
+    const c = loadConfig(base)
+    assert.equal(c.artifactsEnabled, true)
+    assert.equal(c.resultTtlMs, 3600000)
+    assert.equal(c.resultMaxRows, 20000)
+    assert.equal(c.resultStoreMaxMb, 64)
+    assert.equal(c.exportTtlMs, 1800000)
+    assert.equal(c.exportMaxRows, 5000)
+    assert.equal(c.exportTimeoutMs, 30000)
+    assert.equal(c.exportMaxConcurrency, 2)
+    assert.equal(c.fileStoreMaxMb, 96)
+    assert.equal(c.exportRateLimitPerMin, 20)
+})
+
+test("ARTIFACTS_ENABLED=false is recognised and other values are rejected", () => {
+    assert.equal(loadConfig({ ...base, ARTIFACTS_ENABLED: "false" }).artifactsEnabled, false)
+    assert.throws(() => loadConfig({ ...base, ARTIFACTS_ENABLED: "no" }), /ARTIFACTS_ENABLED/)
+})
+
+test("artifact limits reject invalid values without echoing secrets", () => {
+    assert.throws(() => loadConfig({ ...base, EXPORT_MAX_ROWS: "0" }), /EXPORT_MAX_ROWS/)
+    assert.throws(() => loadConfig({ ...base, EXPORT_TTL_MS: "abc" }), (e: Error) => /EXPORT_TTL_MS/.test(e.message) && !e.message.includes(base.API_TOKEN + base.API_TOKEN))
+    assert.equal(loadConfig({ ...base, EXPORT_MAX_ROWS: "100" }).exportMaxRows, 100)
+})
