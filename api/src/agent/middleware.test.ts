@@ -79,3 +79,40 @@ test("a permanent tool failure is not retried", async () => {
     await agent.invoke({ messages: msgs })
     assert.equal(attempts, 1)
 })
+
+import { createMemoryResultStore } from "../store/memory-result-store.ts"
+
+test("capture stores every record, the model still sees the bounded summary with resultId, and the artifact is attached", async () => {
+    const results = createMemoryResultStore({ ttlMs: 3_600_000, maxRows: 20000, maxBytes: 1e9 })
+    const model = new ScriptedModel({
+        script: [new AIMessage({ content: "", tool_calls: [{ name: "dksoft_list_paid_bills", args: { data_inicial: "2026-10-01", data_final: "2026-10-31" }, id: "1" }] }), new AIMessage("ok")],
+    })
+    const tracker: RunTracker = { partial: false, toolCalls: 0, model: null }
+    const withContact = tool(async () => JSON.stringify(Array.from({ length: 400 }, (_, i) => ({ id: i, valor_pago: 1.5, cpf: "12345678909" }))), { name: "dksoft_list_paid_bills", description: "x", schema: z.object({}).passthrough() })
+    const agent = createAgent({ model, tools: [withContact], middleware: [shapeResultsMiddleware({ maxRows: 40, maxChars: 24000 }, tracker, { conversationId: "c1", results, newId: () => "11111111-1111-4111-8111-111111111111" })] })
+    const out = await agent.invoke({ messages: [{ role: "user", content: "oi" }] })
+    const toolMsg = out.messages.find((m: { type?: string }) => m.type === "tool") as unknown as { content: string; artifact: Record<string, unknown> }
+    const parsed = JSON.parse(toolMsg.content)
+    assert.equal(parsed.resultId, "11111111-1111-4111-8111-111111111111")
+    assert.equal(parsed.registros.length, 40)
+    assert.ok(!toolMsg.content.includes("12345678909"), "model never sees contact data of list_*")
+    const stored = results.get("c1", parsed.resultId)!
+    assert.equal(stored.rows.length, 400)
+    assert.equal(stored.rows[0]!.cpf, "12345678909", "complete records are kept for the file")
+    assert.equal(stored.label, "Contas pagas, 01/10/2026 a 31/10/2026")
+    assert.deepEqual(toolMsg.artifact, { kind: "result", resultId: parsed.resultId, label: stored.label, rows: 400, totalRows: 400, capped: false, expiresAt: stored.expiresAt })
+    assert.equal(tracker.partial, true)
+})
+
+test("errors and non-list results are not captured", async () => {
+    const results = createMemoryResultStore({ ttlMs: 3_600_000, maxRows: 100, maxBytes: 1e9 })
+    const one = tool(async () => JSON.stringify({ id: 1, nome: "Ana" }), { name: "dksoft_find_student", description: "x", schema: z.object({}) })
+    const model = new ScriptedModel({ script: [new AIMessage({ content: "", tool_calls: [{ name: "dksoft_find_student", args: {}, id: "1" }] }), new AIMessage("ok")] })
+    const tracker: RunTracker = { partial: false, toolCalls: 0, model: null }
+    const agent = createAgent({ model, tools: [one], middleware: [shapeResultsMiddleware({ maxRows: 40, maxChars: 24000 }, tracker, { conversationId: "c1", results, newId: () => "x" })] })
+    const out = await agent.invoke({ messages: [{ role: "user", content: "oi" }] })
+    const toolMsg = out.messages.find((m: { type?: string }) => m.type === "tool") as unknown as { content: string; artifact?: unknown }
+    assert.equal(results.list("c1").length, 0)
+    assert.equal(toolMsg.artifact, undefined)
+    assert.ok(!("resultId" in JSON.parse(toolMsg.content)))
+})

@@ -13,7 +13,15 @@ export type ErrorKind =
   | "network"
   | "connection_lost"
   | "client_timeout"
-  | "unexpected_response";
+  | "unexpected_response"
+  | "file_not_found"
+  | "result_not_found"
+  | "nothing_to_export"
+  | "export_too_large"
+  | "export_busy"
+  | "export_timeout"
+  | "export_failed"
+  | "download_failed";
 
 export type ErrorAction = "retry" | "reauthenticate" | "new-conversation" | "wait" | "none";
 
@@ -32,13 +40,13 @@ export type ErrorInput =
   | { source: "client"; kind: "connection_lost" | "client_timeout" | "unexpected_response" | "conversation_not_found"; requestId?: string | null }
   | { source: "network" };
 
-export type ErrorContext = "gate" | "session";
+export type ErrorContext = "gate" | "session" | "export" | "download";
 
 const DEFAULT_RETRY_AFTER = 60;
 
 type Texts = { title: string; message: string; action: ErrorAction };
 
-const TEXTS: Record<Exclude<ErrorKind, "unauthorized" | "rate_limited">, Texts> = {
+const TEXTS: Record<Exclude<ErrorKind, "unauthorized" | "rate_limited" | "export_busy" | "export_too_large">, Texts> = {
   origin_not_allowed: {
     title: "Endereço não autorizado",
     message:
@@ -90,6 +98,36 @@ const TEXTS: Record<Exclude<ErrorKind, "unauthorized" | "rate_limited">, Texts> 
     message: "Não recebi o fim da resposta a tempo. Tente de novo.",
     action: "retry",
   },
+  file_not_found: {
+    title: "Arquivo indisponível",
+    message: "Este arquivo não está mais disponível.",
+    action: "none",
+  },
+  result_not_found: {
+    title: "Dados indisponíveis",
+    message: "Os dados dessa consulta não estão mais disponíveis para exportar. Refaça a pergunta e exporte em seguida.",
+    action: "none",
+  },
+  nothing_to_export: {
+    title: "Nada para exportar",
+    message: "Essa consulta não trouxe registros, então não há o que exportar.",
+    action: "none",
+  },
+  export_timeout: {
+    title: "A geração demorou demais",
+    message: "A geração do arquivo demorou mais que o esperado. Tente de novo ou reduza o período.",
+    action: "retry",
+  },
+  download_failed: {
+    title: "Não foi possível baixar",
+    message: "Não foi possível baixar o arquivo. Verifique a conexão e tente de novo.",
+    action: "retry",
+  },
+  export_failed: {
+    title: "Não foi possível gerar o arquivo",
+    message: "Não foi possível gerar o arquivo agora. Tente de novo.",
+    action: "retry",
+  },
   unexpected_response: {
     title: "Resposta inesperada",
     message:
@@ -100,6 +138,28 @@ const TEXTS: Record<Exclude<ErrorKind, "unauthorized" | "rate_limited">, Texts> 
 
 function make(kind: ErrorKind, texts: Texts, supportCode: string | null, retryAfterSeconds: number | null = null): UserError {
   return { kind, ...texts, retryAfterSeconds, supportCode };
+}
+
+function exportBusy(seconds: number, supportCode: string | null): UserError {
+  return make(
+    "export_busy",
+    {
+      title: "Exportações em andamento",
+      message: `Há outras exportações em andamento. Tente de novo em ${seconds} segundos.`,
+      action: "wait",
+    },
+    supportCode,
+    seconds,
+  );
+}
+
+function exportTooLarge(rows: number | undefined, maxRows: number | undefined, supportCode: string | null): UserError {
+  const fmt = (n: number) => n.toLocaleString("pt-BR");
+  const message =
+    rows !== undefined && maxRows !== undefined
+      ? `Esse resultado tem ${fmt(rows)} linhas e o limite por arquivo é ${fmt(maxRows)}. Reduza o período ou use um filtro e tente de novo.`
+      : "Esse resultado passa do limite de linhas por arquivo. Reduza o período ou use um filtro e tente de novo.";
+  return make("export_too_large", { title: "Resultado grande demais", message, action: "none" }, supportCode);
 }
 
 function fromKind(kind: keyof typeof TEXTS, supportCode: string | null): UserError {
@@ -142,7 +202,7 @@ function rateLimited(seconds: number, supportCode: string | null): UserError {
 export function toUserError(input: ErrorInput, context: ErrorContext = "session"): UserError {
   switch (input.source) {
     case "network":
-      return fromKind("network", null);
+      return fromKind(context === "download" ? "download_failed" : "network", null);
     case "client":
       return fromKind(input.kind, input.requestId ?? null);
     case "stream":
@@ -161,11 +221,26 @@ export function toUserError(input: ErrorInput, context: ErrorContext = "session"
         case "conversation_not_found":
           return fromKind("conversation_not_found", support);
         case "rate_limited":
-          return rateLimited(body.retryAfterSeconds ?? DEFAULT_RETRY_AFTER, support);
+          return context === "export"
+            ? exportBusy(body.retryAfterSeconds ?? DEFAULT_RETRY_AFTER, support)
+            : rateLimited(body.retryAfterSeconds ?? DEFAULT_RETRY_AFTER, support);
         case "invalid_body":
           return fromKind("invalid_body", support);
         case "internal_error":
-          return fromKind("server_error", support);
+          return context === "export" ? fromKind("export_failed", support) : fromKind("server_error", support);
+        case "file_not_found":
+          return fromKind("file_not_found", support);
+        case "result_not_found":
+        case "chart_not_found":
+          return fromKind("result_not_found", support);
+        case "nothing_to_export":
+          return fromKind("nothing_to_export", support);
+        case "export_too_large":
+          return exportTooLarge(body.rows, body.maxRows, support);
+        case "export_busy":
+          return exportBusy(body.retryAfterSeconds ?? DEFAULT_RETRY_AFTER, support);
+        case "export_timeout":
+          return fromKind("export_timeout", support);
       }
     }
   }

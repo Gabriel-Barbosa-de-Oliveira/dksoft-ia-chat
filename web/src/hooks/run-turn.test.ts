@@ -146,3 +146,16 @@ test("onMeta é chamado com o id da conversa assim que o meta chega", async () =
   assert.deepEqual(seen, ["c1"]);
   assert.deepEqual(order.slice(0, 2), ["META", "onMeta"]);
 });
+
+test("spec 004: result, chart e file viram ações e anúncios", async () => {
+  const s = setup();
+  const U = "6f1c0d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f";
+  const chart = { id: U, type: "bar" as const, title: "Recebido", valueKind: "currency" as const, categories: ["a"], series: [{ name: "s", values: [1] }], summary: "r", resultId: U, partial: false };
+  const file = { id: U, conversationId: U, resultId: U, name: "a.xlsx", format: "xlsx" as const, mime: "m", sizeBytes: 1, rowCount: 2, includesChart: false, containsFullPersonalData: false, createdAt: "x", expiresAt: "y", downloadPath: "/p" };
+  const events: StreamEvent[] = [meta, { event: "result", resultId: U, label: "Contas", rows: 2, totalRows: 2, capped: false, expiresAt: "z" }, { event: "chart", chart }, { event: "file", file }, done()];
+  await runTurn({ ...s.deps, stream: from(events) });
+  assert.deepEqual(s.actions.map((a) => a.type), ["META", "RESULT", "CHART", "FILE", "DONE"]);
+  const result = s.actions[1] as Extract<ChatAction, { type: "RESULT" }>;
+  assert.equal("event" in result.result, false);
+  assert.deepEqual(s.said.map((x) => x[1]), ["Gráfico exibido: Recebido.", "Arquivo pronto: a.xlsx.", "Resposta concluída."]);
+});

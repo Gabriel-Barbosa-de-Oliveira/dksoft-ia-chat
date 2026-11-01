@@ -71,3 +71,39 @@ test("nunca repassa texto cru do servidor", () => {
     assert.ok(e.title.length > 0 && e.message.length > 0);
   }
 });
+
+const httpExport = (error: string, extra: Record<string, unknown> = {}, status = 404) =>
+  toUserError({ source: "http", status, body: { requestId: "req-1", error, ...extra } as never }, "export");
+
+test("spec 004: erros de exportação e download têm texto, ação e código de suporte", () => {
+  assert.equal(httpExport("file_not_found").message, "Este arquivo não está mais disponível.");
+  assert.match(httpExport("result_not_found").message, /Refaça a pergunta e exporte em seguida/);
+  assert.match(httpExport("nothing_to_export", {}, 422).message, /não há o que exportar/);
+  assert.match(httpExport("export_timeout", {}, 504).message, /demorou mais que o esperado/);
+  assert.equal(httpExport("internal_error", {}, 500).message, "Não foi possível gerar o arquivo agora. Tente de novo.");
+  for (const e of ["file_not_found", "result_not_found", "nothing_to_export", "export_timeout"]) {
+    assert.equal(httpExport(e).supportCode, "req-1");
+  }
+});
+
+test("spec 004: tamanho e fila usam os números da API", () => {
+  const big = httpExport("export_too_large", { rows: 7000, maxRows: 5000 }, 413);
+  assert.match(big.message, /7\.000 linhas e o limite por arquivo é 5\.000/);
+  const busy = httpExport("export_busy", { retryAfterSeconds: 12 }, 429);
+  assert.equal(busy.retryAfterSeconds, 12);
+  assert.equal(busy.action, "wait");
+  assert.match(busy.message, /em 12 segundos/);
+  assert.equal(httpExport("rate_limited", { retryAfterSeconds: 7 }, 429).kind, "export_busy");
+});
+
+test("spec 004: fora do contexto de exportação, internal_error segue igual", () => {
+  const e = toUserError({ source: "http", status: 500, body: { requestId: "r", error: "internal_error" } });
+  assert.equal(e.kind, "server_error");
+});
+
+test("spec 004: falha de rede no download usa o texto próprio", () => {
+  const e = toUserError({ source: "network" }, "download");
+  assert.equal(e.message, "Não foi possível baixar o arquivo. Verifique a conexão e tente de novo.");
+  assert.equal(e.action, "retry");
+  assert.equal(toUserError({ source: "network" }).kind, "network");
+});

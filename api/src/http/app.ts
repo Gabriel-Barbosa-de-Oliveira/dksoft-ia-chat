@@ -9,6 +9,7 @@ import type { ChatService } from "../services/chat.service.ts"
 import type { ConversationStore } from "../services/conversation-store.repository.ts"
 import { registerChatRoute } from "./routes/chat.ts"
 import { registerConversationRoutes } from "./routes/conversations.ts"
+import { registerExportRoutes, type ExportRoutesDeps } from "./routes/exports.ts"
 import { registerHealthRoute } from "./routes/health.ts"
 
 export type AppOptions = {
@@ -20,6 +21,8 @@ export type AppOptions = {
     accessKey?: string
     corsOrigins?: string[]
     trustProxy?: boolean
+    // spec 004: absent = the routes do not exist (ARTIFACTS_ENABLED=false)
+    artifacts?: Omit<ExportRoutesDeps, "conversations">
 }
 
 declare module "fastify" {
@@ -61,5 +64,6 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
     registerHealthRoute(app)
     if (options.chat) registerChatRoute(app, options.chat, options.chatRateLimitPerMin ?? 30)
     if (options.conversations) registerConversationRoutes(app, options.conversations)
+    if (options.artifacts && options.conversations) registerExportRoutes(app, { ...options.artifacts, conversations: options.conversations })
     return app
 }

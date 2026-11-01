@@ -27,7 +27,26 @@ CREATE TABLE IF NOT EXISTS runs (
   error_type TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_runs_started ON runs(started_at);
+CREATE TABLE IF NOT EXISTS export_runs (
+  request_id TEXT NOT NULL,
+  conversation_id TEXT,
+  kind TEXT NOT NULL CHECK (kind IN ('export','chart')),
+  detail TEXT NOT NULL,
+  origin TEXT NOT NULL CHECK (origin IN ('chat','button')),
+  rows INTEGER NOT NULL,
+  duration_ms INTEGER NOT NULL CHECK (duration_ms >= 0),
+  outcome TEXT NOT NULL CHECK (outcome IN ('ok','too_large','timeout','not_found','error')),
+  explicit_pii INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_export_runs_created ON export_runs(created_at);
 `
+
+// idempotent column additions for databases created by earlier versions
+function migrate(db: DatabaseSync): void {
+    const cols = db.prepare("PRAGMA table_info(messages)").all() as { name: string }[]
+    if (!cols.some((c) => c.name === "artifacts")) db.exec("ALTER TABLE messages ADD COLUMN artifacts TEXT")
+}
 
 export function openDatabase(path: string): DatabaseSync {
     if (path !== ":memory:") {
@@ -39,5 +58,6 @@ export function openDatabase(path: string): DatabaseSync {
     db.exec("PRAGMA foreign_keys = ON")
     if (path !== ":memory:") db.exec("PRAGMA journal_mode = WAL")
     db.exec(SCHEMA)
+    migrate(db)
     return db
 }
