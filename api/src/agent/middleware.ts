@@ -31,7 +31,7 @@ export function shapeResultsMiddleware(limits: ShapeLimits, tracker: RunTracker)
             if (raw === undefined) return result
             const shaped = shapeToolResult(request.toolCall.name, raw, limits)
             if (shaped.truncated) tracker.partial = true
-            return new ToolMessage({ content: shaped.text, tool_call_id: result.tool_call_id, name: result.name, status: result.status })
+            return new ToolMessage({ content: shaped.text, tool_call_id: result.tool_call_id, name: result.name, status: result.status, ...(result.artifact !== undefined ? { artifact: result.artifact } : {}) })
         },
     })
 }

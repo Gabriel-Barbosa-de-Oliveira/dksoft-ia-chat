@@ -1,7 +1,20 @@
 import { randomUUID } from "node:crypto"
 import type { DatabaseSync } from "node:sqlite"
 import type { ChatTurn } from "../domain/agent-port.ts"
+import { ChartSpecSchema } from "../domain/chart-spec.ts"
+import { z } from "zod"
 import type { ConversationStore, ConversationSummary, StoredMessage } from "../services/conversation-store.repository.ts"
+
+const ArtifactsSchema = z.object({ charts: z.array(ChartSpecSchema) })
+
+// corrupted or out-of-schema JSON yields no charts (the answer text stays intact)
+function parseCharts(json: string | null) {
+    if (!json) return undefined
+    try {
+        const parsed = ArtifactsSchema.safeParse(JSON.parse(json))
+        return parsed.success && parsed.data.charts.length ? parsed.data.charts : undefined
+    } catch { return undefined }
+}
 
 export function createSqliteConversationStore(db: DatabaseSync, now: () => Date = () => new Date()): ConversationStore {
     const iso = () => now().toISOString()
@@ -21,13 +34,13 @@ export function createSqliteConversationStore(db: DatabaseSync, now: () => Date 
                 .all(id, n) as { role: "user" | "assistant"; content: string }[]
             return rows.reverse().map((r) => ({ role: r.role, content: r.content }))
         },
-        appendPair(id, user, assistant) {
+        appendPair(id, user, assistant, artifacts) {
             const t = iso()
             db.exec("BEGIN")
             try {
-                const ins = db.prepare("INSERT INTO messages (conversation_id, role, content, created_at) VALUES (?,?,?,?)")
-                ins.run(id, "user", user, t)
-                ins.run(id, "assistant", assistant, t)
+                const ins = db.prepare("INSERT INTO messages (conversation_id, role, content, created_at, artifacts) VALUES (?,?,?,?,?)")
+                ins.run(id, "user", user, t, null)
+                ins.run(id, "assistant", assistant, t, artifacts && artifacts.charts.length ? JSON.stringify(artifacts) : null)
                 db.prepare("UPDATE conversations SET updated_at = ? WHERE id = ?").run(t, id)
                 db.exec("COMMIT")
             } catch (e) {
@@ -43,9 +56,12 @@ export function createSqliteConversationStore(db: DatabaseSync, now: () => Date 
         },
         listMessages(id): StoredMessage[] {
             const rows = db
-                .prepare("SELECT id, role, content, created_at FROM messages WHERE conversation_id = ? ORDER BY id")
-                .all(id) as { id: number; role: "user" | "assistant"; content: string; created_at: string }[]
-            return rows.map((r) => ({ id: r.id, role: r.role, content: r.content, createdAt: r.created_at }))
+                .prepare("SELECT id, role, content, created_at, artifacts FROM messages WHERE conversation_id = ? ORDER BY id")
+                .all(id) as { id: number; role: "user" | "assistant"; content: string; created_at: string; artifacts: string | null }[]
+            return rows.map((r) => {
+                const charts = parseCharts(r.artifacts)
+                return { id: r.id, role: r.role, content: r.content, createdAt: r.created_at, ...(charts ? { charts } : {}) }
+            })
         },
     }
 }

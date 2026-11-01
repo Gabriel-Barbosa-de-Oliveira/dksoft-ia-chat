@@ -59,7 +59,7 @@ export function createChatService(deps: ChatServiceDeps) {
                             if (ev.type === "token") { answer += ev.text; yield { event: "token", data: { text: ev.text } } }
                             else if (ev.type === "tool") {
                                 yield { event: "tool", data: { phase: ev.phase, name: ev.name, label: toolLabel(ev.name), ...(ev.ok !== undefined ? { ok: ev.ok } : {}) } }
-                            } else { modelUsed = ev.model; partial = ev.partial; toolCalls = ev.toolCalls }
+                            } else if (ev.type === "end") { modelUsed = ev.model; partial = ev.partial; toolCalls = ev.toolCalls }
                         }
                     } catch (err) {
                         if (clientSignal.aborted) { outcome = "aborted"; return }
