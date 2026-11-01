@@ -101,6 +101,8 @@ Quando algo impede o arquivo ou o gráfico (resultado grande demais, link vencid
 3. **Given** uma falha ao gerar o arquivo ou tempo esgotado, **When** o erro ocorre, **Then** a pessoa vê uma mensagem em português, o código de suporte da requisição e a opção de tentar de novo, e a conversa continua intacta.
 4. **Given** um link de download copiado, **When** alguém tenta usá-lo fora da conversa em que foi gerado ou sem a chave de acesso do chat, **Then** o download é recusado.
 5. **Given** várias exportações seguidas, **When** a pessoa pede mais arquivos do que o sistema suporta ao mesmo tempo, **Then** vê um aviso claro para aguardar e tentar de novo, sem perder os pedidos já feitos.
+6. **Given** uma conversa antiga reaberta pelo histórico (ou uma consulta feita há mais de 1 hora), **When** a pessoa pede um arquivo sobre aquele resultado, **Then** o assistente explica que os dados daquela consulta não estão mais disponíveis para exportar e oferece refazer a consulta, e as respostas antigas não mostram o controle "Exportar".
+7. **Given** um resultado com CPF, e-mail e telefone de alunos, **When** a pessoa exporta pelo controle ou pede o arquivo sem mencionar dados completos, **Then** esses campos saem mascarados; **When** pede explicitamente os dados completos em texto, **Then** saem completos e o cartão de download avisa isso.
 
 ---
 
@@ -118,7 +120,7 @@ Quando algo impede o arquivo ou o gráfico (resultado grande demais, link vencid
 - Séries com escalas muito diferentes ou valores negativos: o gráfico continua correto e legível, ou o assistente explica por que não o mostra.
 - Várias exportações do mesmo resultado: cada pedido gera um arquivo com nome distinto e prazo próprio.
 - Pessoa com a conversa aberta em duas abas: um link gerado numa aba funciona somente para a mesma conversa e a mesma chave de acesso.
-- Reabertura de conversa antiga e pedido de arquivo sobre dados dela: segue a regra de FR-024.
+- Reabertura de conversa antiga e pedido de arquivo sobre dados dela: os dados não estão mais disponíveis; segue a regra de FR-024.
 - Pedido de alteração de dados ("exporta e apaga os inadimplentes"): continua sendo recusado, pois a API DKSOFT é somente leitura.
 
 ## Requirements *(mandatory)*
@@ -134,7 +136,7 @@ Quando algo impede o arquivo ou o gráfico (resultado grande demais, link vencid
 - **FR-005**: O sistema MUST aplicar um limite de linhas por arquivo (padrão de 5.000 linhas, configurável) e, ao excedê-lo, MUST informar o limite e o tamanho do resultado e sugerir como reduzi-lo, sem cortar dados em silêncio.
 - **FR-006**: Todo arquivo MUST trazer título, data e hora de geração, período e filtros usados, avisos de resultado parcial quando houver, colunas com nomes legíveis em português e valores formatados em português do Brasil (reais, datas dia/mês/ano).
 - **FR-007**: No Excel, valores numéricos e datas MUST ser gravados como números e datas, e textos que pareçam fórmulas MUST ser tratados como texto.
-- **FR-008**: Dados pessoais de alunos (CPF, e-mail, telefone) em arquivos MUST seguir a regra: [NEEDS CLARIFICATION: arquivos exportados devem mascarar CPF, e-mail e telefone por padrão, incluí-los completos, ou incluí-los completos só quando a pessoa pedir explicitamente?]
+- **FR-008**: Dados pessoais de alunos (CPF, e-mail, telefone) em arquivos MUST sair mascarados por padrão, com o mesmo padrão de máscara usado nos registros de funcionamento (spec 001), e MUST sair completos somente quando a pessoa pedir isso de forma explícita no texto da conversa (por exemplo, "com o CPF completo"). O controle "Exportar" MUST gerar sempre o arquivo mascarado. Quando o arquivo sair com dados completos, o cartão de download MUST informar isso, e o registro de funcionamento MUST anotar apenas que houve pedido explícito, sem o conteúdo.
 - **FR-009**: O sistema MUST NOT incluir dados pessoais no nome do arquivo.
 - **FR-010**: O sistema MUST oferecer em cada resposta com dados exportáveis um controle "Exportar" com os três formatos, que gera o mesmo arquivo do pedido escrito sem nova interpretação do assistente.
 - **FR-011**: O sistema MUST NOT exibir o controle de exportação em respostas sem dados exportáveis e MUST NOT gerar arquivo vazio, inventado ou sem resultado consultado; quando não houver dados, MUST explicar e oferecer a consulta.
@@ -156,7 +158,7 @@ Quando algo impede o arquivo ou o gráfico (resultado grande demais, link vencid
 
 - **FR-022**: O sistema MUST manter as regras já em vigor das specs 001 e 002: chave de acesso em toda chamada, origens autorizadas, API DKSOFT somente leitura (recusa de pedidos de alteração), um único token sem multi-tenant, token e chave do provedor nunca expostos, mensagens e arquivos em português do Brasil.
 - **FR-023**: O sistema MUST registrar cada exportação e cada gráfico com identificador de requisição, formato ou tipo, quantidade de linhas, duração e resultado (sucesso, erro, limite excedido, tempo esgotado), sem registrar conteúdo, dados pessoais nem o endereço do link.
-- **FR-024**: A disponibilidade dos dados para exportar ao reabrir uma conversa antiga MUST seguir a regra: [NEEDS CLARIFICATION: ao reabrir uma conversa pelo histórico, a pessoa pode exportar os resultados dela (exige guardar os registros consultados por mais tempo), ou só pode exportar os dados da sessão atual e precisa refazer a consulta?]
+- **FR-024**: Os registros consultados MUST ficar disponíveis para exportação somente durante a sessão em que foram consultados, por no máximo 1 hora (configurável) após a consulta, e MUST NOT ser guardados além disso. Ao reabrir uma conversa pelo histórico, ou depois desse prazo, o controle "Exportar" MUST NOT aparecer nas respostas antigas, e um pedido de arquivo em texto MUST ser respondido com explicação e a oferta de refazer a consulta. Os gráficos já exibidos continuam reaparecendo (FR-019), pois a especificação do gráfico faz parte da resposta.
 - **FR-025**: O sistema MUST impor um tempo máximo para gerar cada arquivo e MUST traduzir falhas (geração, tempo esgotado, limite de exportações simultâneas, link expirado) em mensagens claras em português, com código de suporte e ação de nova tentativa, sem perder a conversa.
 - **FR-026**: Nenhum fluxo das specs 001 e 002 (perguntar, retomar conversas, interromper, tratar erros) pode mudar de comportamento para quem não pede arquivo nem gráfico.
 
@@ -192,6 +194,7 @@ Quando algo impede o arquivo ou o gráfico (resultado grande demais, link vencid
 - Os três tipos de gráfico (barras, linhas, pizza) cobrem comparações, séries temporais e distribuições; outros tipos, gráficos interativos avançados e painéis fixos ficam fora de escopo.
 - Por padrão, um arquivo contém só os dados (e o gráfico quando a pessoa pedir); uma narrativa gerada pelo modelo dentro do arquivo não faz parte do escopo.
 - O arquivo reflete o que a pessoa já viu na conversa: as colunas são as relevantes ao resultado consultado, e o tratamento de dados pessoais segue FR-008.
+- Decisões do dono do produto (31/10/2026): dados pessoais saem mascarados por padrão e completos só sob pedido explícito em texto (FR-008); a exportação vale só para os dados da sessão atual, sem guardar registros consultados além de 1 hora (FR-024). Exportar de conversas antigas com retenção maior fica para uma spec futura, se houver demanda.
 - Os arquivos são gerados e guardados só pelo tempo da validade do link; não há arquivo permanente, envio por e-mail, agendamento de relatórios, modelos personalizados com logotipo do cliente nem exportação da transcrição da conversa nesta fase.
 - Voz continua fora de escopo e tem spec própria.
 - A geração de PDF, Word e Excel e a exibição de gráficos provavelmente exigirão novas bibliotecas nos pacotes `api/` e `web/`; se isso afetar a stack obrigatória da constitution, será tratado como amendment no plano, e não nesta spec.

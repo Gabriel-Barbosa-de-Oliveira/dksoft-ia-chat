@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,9 +31,7 @@
 
 ## Notes
 
-- Pendentes: 2 marcadores [NEEDS CLARIFICATION] aguardando decisão do dono do produto:
-  - FR-008 — dados pessoais (CPF, e-mail, telefone) em arquivos exportados.
-  - FR-024 — exportar resultados ao reabrir uma conversa antiga (retenção dos registros consultados).
+- Clarificações resolvidas em 31/10/2026: FR-008 (dados pessoais mascarados por padrão, completos só sob pedido explícito em texto) e FR-024 (exportação só com dados da sessão atual, retenção máxima de 1 hora).
 - Termos como "Excel (.xlsx)", "PDF" e "Word (.docx)" são formatos pedidos pelo usuário, não detalhe de implementação.
 - Bibliotecas e armazenamento de arquivos foram deixados para o plano; a possível necessidade de amendment da constitution está registrada em Assumptions.
-- Itens incompletos exigem atualização da spec antes de `/speckit-clarify` ou `/speckit-plan`.
+- Todos os itens passam; a spec está pronta para `/speckit-clarify` (opcional) ou `/speckit-plan`.
