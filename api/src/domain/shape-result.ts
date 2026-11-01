@@ -1,9 +1,8 @@
-import { z } from "zod"
+import { extractRows } from "./extract-rows.ts"
 
 export type ShapeLimits = { maxRows: number; maxChars: number }
 export type ShapedResult = { text: string; truncated: boolean }
 
-const Row = z.record(z.unknown())
 const MONEY_FIELDS = ["valor_pago", "valor"] as const
 // personal contact data is dropped from list_* results (constitution VI); find_* keep it
 const CONTACT_FIELDS = ["cpf", "email", "telefone", "celular", "telefone_contato"] as const
@@ -36,26 +35,10 @@ function cutText(text: string, maxChars: number): ShapedResult {
 }
 
 // pure: turns the raw tool text into a bounded JSON summary with exact totals
-export function shapeToolResult(toolName: string, rawText: string, limits: ShapeLimits): ShapedResult {
-    let json: unknown
-    try { json = JSON.parse(rawText) } catch { return cutText(rawText, limits.maxChars) }
-
-    let rows: Record<string, unknown>[] | undefined
-    let context: Record<string, unknown> = {}
-    if (Array.isArray(json)) {
-        const parsed = z.array(Row).safeParse(json)
-        if (parsed.success) rows = parsed.data
-    } else if (json && typeof json === "object") {
-        const entries = Object.entries(json as Record<string, unknown>)
-        const arrays = entries.filter(([, v]) => Array.isArray(v))
-        if (arrays.length === 1) {
-            const parsed = z.array(Row).safeParse(arrays[0]![1])
-            if (parsed.success) {
-                rows = parsed.data
-                context = Object.fromEntries(entries.filter(([k]) => k !== arrays[0]![0]))
-            }
-        }
-    }
+export function shapeToolResult(toolName: string, rawText: string, limits: ShapeLimits, meta?: { resultId?: string }): ShapedResult {
+    const extracted = extractRows(rawText)
+    const rows = extracted?.rows
+    const context = extracted?.context ?? {}
     if (!rows) return cutText(rawText, limits.maxChars)
 
     const cleaned = isListTool(toolName) ? rows.map(stripContact) : rows
@@ -65,7 +48,7 @@ export function shapeToolResult(toolName: string, rawText: string, limits: Shape
     const build = (n: number) => {
         const registros = cleaned.slice(0, n)
         const truncado = n < total
-        return JSON.stringify({ ...context, total, ...(Object.keys(somas).length ? { somas } : {}), registros, truncado, omitidos: total - n })
+        return JSON.stringify({ ...(meta?.resultId ? { resultId: meta.resultId } : {}), ...context, total, ...(Object.keys(somas).length ? { somas } : {}), registros, truncado, omitidos: total - n })
     }
     let text = build(keep)
     while (text.length > limits.maxChars && keep > 0) {

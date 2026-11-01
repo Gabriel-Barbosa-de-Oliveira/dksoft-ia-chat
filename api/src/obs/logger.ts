@@ -1,6 +1,9 @@
 import type { FastifyServerOptions } from "fastify"
 import { maskPii } from "../domain/mask-pii.ts"
 
+// the download path carries the file id: it never reaches the logs
+export const maskFileId = (url: string) => url.replace(/(\/exports\/)[^/?#]+/, "$1:fileId")
+
 export type LogSink = { write(chunk: string): void }
 
 // pino options for Fastify: no request bodies, no auth headers, PII masked in any free text
@@ -9,7 +12,7 @@ export function buildLoggerOptions(sink?: LogSink): NonNullable<FastifyServerOpt
         level: process.env.LOG_LEVEL ?? "info",
         redact: { paths: ["req.headers.authorization", "req.headers.cookie", "req.body", "res.headers['set-cookie']"], censor: "[redacted]" },
         serializers: {
-            req: (req: { id?: string; method?: string; url?: string }) => ({ id: req.id, method: req.method, url: maskPii(req.url ?? "") }),
+            req: (req: { id?: string; method?: string; url?: string }) => ({ id: req.id, method: req.method, url: maskPii(maskFileId(req.url ?? "")) }),
             res: (res: { statusCode?: number }) => ({ statusCode: res.statusCode }),
             err: (err: Error) => ({ type: err.name, message: maskPii(err.message), stack: maskPii(err.stack ?? "") }),
         },

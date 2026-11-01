@@ -38,6 +38,17 @@
   --color-icon-alert: var(--color-accent-700);
   --color-text-alert: var(--color-link);
   --color-scrim: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+
+  /* Gráficos (spec 004): 6 séries distinguíveis por cor, forma e padrão; ≥ 3:1 contra a superfície (tokens.test.ts). */
+  --chart-series-1: var(--color-accent-700);
+  --chart-series-2: var(--color-neutral-900);
+  --chart-series-3: #1d4ed8;
+  --chart-series-4: #047857;
+  --chart-series-5: #b45309;
+  --chart-series-6: #6d28d9;
+  --chart-text: var(--color-text);
+  --chart-axis: var(--color-text-muted);
+  --chart-grid: color-mix(in srgb, var(--color-text) 14%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,6 +68,12 @@
     --color-text-muted: var(--color-neutral-400);
     --color-focus: var(--color-accent-500);
     --color-icon-alert: var(--color-accent-400);
+    --chart-series-1: var(--color-accent-400);
+    --chart-series-2: var(--color-neutral-300);
+    --chart-series-3: #60a5fa;
+    --chart-series-4: #34d399;
+    --chart-series-5: #fbbf24;
+    --chart-series-6: #a78bfa;
   }
 }
 
@@ -76,6 +93,12 @@
   --color-text-muted: var(--color-neutral-400);
   --color-focus: var(--color-accent-500);
   --color-icon-alert: var(--color-accent-400);
+  --chart-series-1: var(--color-accent-400);
+  --chart-series-2: var(--color-neutral-300);
+  --chart-series-3: #60a5fa;
+  --chart-series-4: #34d399;
+  --chart-series-5: #fbbf24;
+  --chart-series-6: #a78bfa;
 }
 
 :root[data-theme="light"] {

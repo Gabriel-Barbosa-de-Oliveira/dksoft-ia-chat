@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { ChartSpecSchema } from "./chart-spec.ts";
+import { FileDescriptorSchema } from "./file-descriptor.ts";
 import { UnexpectedResponseError } from "./failures.ts";
 import type { SseFrame } from "./sse.ts";
 
@@ -22,12 +24,28 @@ const DoneData = z.object({
 });
 const ErrorData = z.object({ requestId: z.string(), code: StreamErrorCodeSchema, message: z.string().optional() });
 
+const ResultData = z.object({
+  resultId: z.string().uuid(),
+  label: z.string(),
+  rows: z.number().int().min(1),
+  totalRows: z.number().int().min(1),
+  capped: z.boolean(),
+  expiresAt: z.string(),
+});
+const ChartData = z.object({ chart: ChartSpecSchema });
+const FileData = z.object({ file: FileDescriptorSchema });
+
+export type ResultNotice = z.infer<typeof ResultData>;
+
 export type StreamEvent =
   | ({ event: "meta" } & z.infer<typeof MetaData>)
   | ({ event: "tool" } & z.infer<typeof ToolData>)
   | ({ event: "token" } & z.infer<typeof TokenData>)
   | ({ event: "done" } & z.infer<typeof DoneData>)
-  | ({ event: "error" } & z.infer<typeof ErrorData>);
+  | ({ event: "error" } & z.infer<typeof ErrorData>)
+  | ({ event: "result" } & z.infer<typeof ResultData>)
+  | ({ event: "chart" } & z.infer<typeof ChartData>)
+  | ({ event: "file" } & z.infer<typeof FileData>);
 
 export const ApiErrorCodeSchema = z.enum([
   "invalid_body",
@@ -36,12 +54,22 @@ export const ApiErrorCodeSchema = z.enum([
   "conversation_not_found",
   "rate_limited",
   "internal_error",
+  // spec 004 (exportação e download)
+  "result_not_found",
+  "file_not_found",
+  "chart_not_found",
+  "export_too_large",
+  "nothing_to_export",
+  "export_busy",
+  "export_timeout",
 ]);
 export const ApiErrorBodySchema = z.object({
   requestId: z.string(),
   error: ApiErrorCodeSchema,
   retryAfterSeconds: z.number().optional(),
   conversationId: z.string().optional(),
+  rows: z.number().optional(),
+  maxRows: z.number().optional(),
 });
 export type ApiErrorBody = z.infer<typeof ApiErrorBodySchema>;
 
@@ -64,6 +92,8 @@ export const ChatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string(),
   createdAt: z.string(),
+  /** Só nas respostas que tiveram gráfico (spec 004); arquivos e resultados nunca são persistidos. */
+  charts: z.array(ChartSpecSchema).optional(),
 });
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
@@ -73,7 +103,7 @@ export const MessagesResponseSchema = z.object({
 });
 export type MessagesResponse = z.infer<typeof MessagesResponseSchema>;
 
-const schemas = { meta: MetaData, tool: ToolData, token: TokenData, done: DoneData, error: ErrorData } as const;
+const schemas = { meta: MetaData, tool: ToolData, token: TokenData, done: DoneData, error: ErrorData, result: ResultData, chart: ChartData, file: FileData } as const;
 
 /** Quadro SSE → evento tipado. Evento desconhecido é ignorado; conhecido com dados inválidos lança. */
 export function parseStreamFrame(frame: SseFrame): StreamEvent | "ignored" {

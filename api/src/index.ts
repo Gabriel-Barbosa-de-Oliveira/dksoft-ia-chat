@@ -10,6 +10,14 @@ import { createConversationLock } from "./services/conversation-lock.ts"
 import { openDatabase } from "./store/db.ts"
 import { createSqliteConversationStore } from "./store/sqlite-conversation-store.ts"
 import { createSqliteRunStore } from "./store/sqlite-run-store.ts"
+import { randomUUID } from "node:crypto"
+import { createArtifactToolBuilder } from "./agent/artifact-tools.ts"
+import { createDocumentRenderer } from "./render/worker-pool.ts"
+import { createChartService } from "./services/chart.service.ts"
+import { createExportService } from "./services/export.service.ts"
+import { createMemoryFileStore } from "./store/memory-file-store.ts"
+import { createMemoryResultStore } from "./store/memory-result-store.ts"
+import { createSqliteExportRunStore } from "./store/sqlite-export-run-store.ts"
 
 // composition root: the only place that wires config, IO and services together
 async function main() {
@@ -30,6 +38,25 @@ async function main() {
     }
 
     const conversations = createSqliteConversationStore(db)
+
+    // spec 004: results, charts and files live in memory only; ARTIFACTS_ENABLED=false restores the MVP behaviour
+    let artifactsForAgent
+    let artifactsForHttp
+    let renderer: ReturnType<typeof createDocumentRenderer> | undefined
+    let sweeper: ReturnType<typeof setInterval> | undefined
+    if (config.artifactsEnabled) {
+        const results = createMemoryResultStore({ ttlMs: config.resultTtlMs, maxRows: config.resultMaxRows, maxBytes: config.resultStoreMaxMb * 1024 * 1024 })
+        const files = createMemoryFileStore({ maxBytes: config.fileStoreMaxMb * 1024 * 1024 })
+        const runs = createSqliteExportRunStore(db)
+        renderer = createDocumentRenderer({ timeoutMs: config.exportTimeoutMs, maxConcurrency: config.exportMaxConcurrency })
+        const exports = createExportService({ results, files, renderer, runs, config: { exportMaxRows: config.exportMaxRows, exportTtlMs: config.exportTtlMs } })
+        const charts = createChartService({ results, runs })
+        artifactsForAgent = { buildTools: createArtifactToolBuilder({ results, exports, charts }), results, newId: randomUUID }
+        artifactsForHttp = { exports, files, rateLimitPerMin: config.exportRateLimitPerMin }
+        sweeper = setInterval(() => { results.sweep(); files.sweep() }, 60_000)
+        sweeper.unref()
+    }
+
     const agent = createProductionAgent({
         model: createChatModel(config.model, config.openrouterApiKey),
         modelName: config.model,
@@ -37,6 +64,7 @@ async function main() {
         mcpTools: tools,
         limiter: createLimiter({ maxConcurrent: config.maxConcurrency, perMinute: config.maxPerMinute }),
         limits: { maxRows: config.toolResultMaxRows, maxChars: 24000 },
+        ...(artifactsForAgent ? { artifacts: artifactsForAgent } : {}),
     })
     const chat = createChatService({
         agent, conversations, runs: createSqliteRunStore(db), lock: createConversationLock(),
@@ -45,10 +73,13 @@ async function main() {
     const app = await createApp({
         chat, conversations, accessKey: config.accessKey, corsOrigins: config.corsOrigins, chatRateLimitPerMin: config.chatRateLimitPerMin,
         trustProxy: config.trustProxy,
+        ...(artifactsForHttp ? { artifacts: artifactsForHttp } : {}),
     })
 
     const shutdown = async () => {
+        if (sweeper) clearInterval(sweeper)
         await app.close()
+        await renderer?.close?.()
         await adapter.close?.()
         db.close()
         process.exit(0)

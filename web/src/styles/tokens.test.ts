@@ -182,3 +182,27 @@ test("a escala de espaçamento ampliada existe", () => {
   assert.equal(lightVars.get("--space-12"), "48px");
   assert.equal(lightVars.get("--space-16"), "64px");
 });
+
+// ---------- gráficos (spec 004, FR-018) ----------
+
+const CHART_SERIES = [1, 2, 3, 4, 5, 6].map((n) => `--chart-series-${n}`);
+
+for (const [theme, vars] of [["claro", lightVars], ["escuro", darkVars]] as const) {
+  test(`gráficos, tema ${theme}: cada série ≥ 3:1 e texto/eixo ≥ 4,5:1 contra a superfície`, () => {
+    const surface = effective("--color-surface", vars, effective("--color-bg", vars, { r: 255, g: 255, b: 255 }));
+    for (const name of CHART_SERIES) {
+      const ratio = contrastRatio(effective(name, vars, surface), surface);
+      assert.ok(ratio >= 3, `${name} (${theme}): ${ratio.toFixed(2)}:1`);
+    }
+    for (const name of ["--chart-text", "--chart-axis"]) {
+      const ratio = contrastRatio(effective(name, vars, surface), surface);
+      assert.ok(ratio >= 4.5, `${name} (${theme}): ${ratio.toFixed(2)}:1`);
+    }
+  });
+}
+
+test("gráficos: as 6 cores de série são todas diferentes em cada tema", () => {
+  for (const vars of [lightVars, darkVars]) {
+    assert.equal(new Set(CHART_SERIES.map((n) => resolve(vars.get(n)!, vars).toLowerCase())).size, 6);
+  }
+});

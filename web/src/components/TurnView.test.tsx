@@ -7,7 +7,7 @@ import { toUserError } from "../lib/errors.ts";
 
 const turn = (over: Partial<Turn> = {}): Turn => ({
   key: "k", question: "Quais pacotes?", status: "done", tools: [], text: "**Resposta**", partial: false,
-  error: null, requestId: null, model: null, ...over,
+  error: null, requestId: null, model: null, result: null, charts: [], files: [], ...over,
 });
 const render = (t: Turn, canCopy = true) => renderToStaticMarkup(<TurnView turn={t} canCopy={canCopy} />);
 
@@ -66,4 +66,40 @@ test("erro mostra título e mensagem e mantém o texto parcial", () => {
   assert.match(html, /A resposta demorou demais/);
   assert.match(html, /parcial/);
   assert.match(html, /role="alert"/);
+});
+
+const U = "6f1c0d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f";
+const fileOf = (name: string) => ({
+  id: crypto.randomUUID(), conversationId: U, resultId: U, name, format: "pdf" as const, mime: "application/pdf", sizeBytes: 1000, rowCount: 3,
+  includesChart: false, containsFullPersonalData: false, createdAt: "2026-10-31T21:30:15.000Z", expiresAt: "2099-10-31T22:00:15.000Z", downloadPath: "/p",
+});
+
+test("spec 004: turno sem arquivos renderiza como antes; com 2 arquivos, 2 cartões na ordem", () => {
+  assert.doesNotMatch(render(turn()), /aria-label="Arquivo /);
+  const html = render(turn({ files: [fileOf("a.pdf"), fileOf("b.pdf")] }));
+  assert.equal((html.match(/aria-label="Arquivo /g) ?? []).length, 2);
+  assert.ok(html.indexOf("a.pdf") < html.indexOf("b.pdf"));
+});
+
+const chartOf = (title: string) => ({
+  id: crypto.randomUUID(), type: "bar" as const, title, valueKind: "integer" as const, categories: ["a", "b"],
+  series: [{ name: "s", values: [1, 2] }], summary: "Resumo do gráfico.", resultId: U, partial: false,
+});
+
+test("spec 004: ordem texto → gráficos → arquivos; turno de histórico mostra os gráficos", () => {
+  const html = render(turn({ charts: [chartOf("Gráfico A")], files: [fileOf("a.pdf")] }));
+  assert.ok(html.indexOf("Resposta") < html.indexOf("Gráfico A"));
+  assert.ok(html.indexOf("Gráfico A") < html.indexOf("a.pdf"));
+  assert.doesNotMatch(render(turn()), /<figure/);
+  assert.match(render(turn({ charts: [chartOf("Do histórico")] })), /Do histórico/);
+});
+
+const liveResult = { resultId: U, label: "Contas", rows: 3, totalRows: 3, capped: false, expiresAt: "2099-01-01T00:00:00.000Z" };
+
+test("spec 004: 'Exportar' só em resposta concluída com resultado vivo", () => {
+  assert.match(render(turn({ result: liveResult })), />Exportar</);
+  assert.doesNotMatch(render(turn()), />Exportar</, "sem resultado (histórico)");
+  assert.doesNotMatch(render(turn({ result: { ...liveResult, expiresAt: "2000-01-01T00:00:00.000Z" } })), />Exportar</, "vencido");
+  assert.doesNotMatch(render(turn({ result: liveResult, status: "error", error: toUserError({ source: "network" }) })), />Exportar</);
+  assert.doesNotMatch(render(turn({ result: liveResult, status: "streaming" })), />Exportar</);
 });

@@ -48,3 +48,14 @@ test("list_* drops contact fields, find_* keeps them", () => {
     const find = JSON.parse(shapeToolResult("dksoft_find_students_by_phone", JSON.stringify(rows), limits).text)
     assert.equal(find.registros[0].cpf, "1")
 })
+
+test("resultId goes first in the summary when provided and is absent otherwise", () => {
+    const raw = JSON.stringify([{ valor_pago: 0.1 }, { valor_pago: 0.2 }])
+    const withId = JSON.parse(shapeToolResult("dksoft_list_paid_bills", raw, { maxRows: 1, maxChars: 24000 }, { resultId: "r-1" }).text)
+    assert.equal(Object.keys(withId)[0], "resultId")
+    assert.equal(withId.resultId, "r-1")
+    assert.equal(withId.somas.valor_pago, 0.3)
+    assert.equal(withId.registros.length, 1)
+    const without = JSON.parse(shapeToolResult("dksoft_list_paid_bills", raw, { maxRows: 1, maxChars: 24000 }).text)
+    assert.equal("resultId" in without, false)
+})

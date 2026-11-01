@@ -36,6 +36,18 @@ Resposta em SSE: `meta` → `tool`… → `token`… → `done` (ou `error`). Ta
 
 Segredos (`API_TOKEN`, `OPENROUTER_API_KEY`) ficam só no backend. A API DKSOFT é somente leitura.
 
+## Arquivos e gráficos (spec 004)
+
+O assistente gera **PDF, Excel (.xlsx) e Word (.docx)** a partir de uma consulta e mostra **gráficos** (barras, linhas, pizza) quando ajudam.
+
+- **Pelo chat**: "me manda isso em Excel", "exporta em PDF com o gráfico". O arquivo aparece como um cartão com nome, formato, tamanho, linhas e validade.
+- **Pelo botão** **Exportar** da resposta (PDF, Excel ou Word; "Incluir gráfico" quando houver um).
+- **Dados pessoais** (CPF, e-mail, telefone) saem **mascarados**. Só o pedido escrito explícito ("com o CPF completo") gera o arquivo completo; o botão nunca gera.
+- **Validade**: os dados da consulta ficam até 1 h e o arquivo até 30 min, só em memória (nada em disco). Conversas antigas reabertas mostram os gráficos, mas não exportam: refaça a pergunta.
+- **Desligar sem novo deploy**: `ARTIFACTS_ENABLED=false` (nenhuma rota, tool ou evento novo).
+
+Contratos em [`specs/004-exportacao-graficos/`](specs/004-exportacao-graficos/) (`contracts/`, `quickstart.md`, `perf-notes.md`); variáveis em [`api/.env.example`](api/.env.example).
+
 ## Spec
 
 [`specs/001-agent-api/spec.md`](specs/001-agent-api/spec.md) · [plano](specs/001-agent-api/plan.md) · [tarefas](specs/001-agent-api/tasks.md) · [quickstart](specs/001-agent-api/quickstart.md)

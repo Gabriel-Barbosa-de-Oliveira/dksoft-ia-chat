@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Copy, LoaderCircle } from "lucide-react";
 import { useAnnouncer } from "../hooks/useAnnouncer.ts";
+import { canExport, resultLive } from "../lib/export-state.ts";
 import type { Turn } from "../lib/chat-reducer.ts";
+import { ChartView } from "./ChartView.tsx";
+import { ExportMenu } from "./ExportMenu.tsx";
+import { FileCard } from "./FileCard.tsx";
 import { Markdown } from "./Markdown.tsx";
 import { StatusNotice } from "./StatusNotice.tsx";
 import { ToolNotices } from "./ToolNotices.tsx";
@@ -42,7 +46,21 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+/** Relógio de 1 s só enquanto o resultado do turno ainda vale; ao vencer, o botão some sem recarregar. */
+function useResultClock(turn: Turn): number {
+  const [now, setNow] = useState(() => Date.now());
+  const watching = turn.result !== null && turn.status === "done" && resultLive(turn.result, now).live;
+  useEffect(() => {
+    if (!watching) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [watching]);
+  return now;
+}
+
 export function TurnView({ turn, renderError, canCopy }: TurnViewProps) {
+  const now = useResultClock(turn);
+  const exportable = turn.result !== null && canExport(turn, now);
   const streaming = turn.status === "pending" || turn.status === "working" || turn.status === "streaming";
   const showCopy = (canCopy ?? clipboardAvailable()) && turn.status === "done" && turn.text !== "";
 
@@ -78,6 +96,12 @@ export function TurnView({ turn, renderError, canCopy }: TurnViewProps) {
               Ela não será guardada no histórico.
             </StatusNotice>
           ) : null}
+          {turn.charts.map((chart) => (
+            <ChartView key={chart.id} chart={chart} />
+          ))}
+          {turn.files.map((file) => (
+            <FileCard key={file.id} file={file} chartId={turn.charts[0]?.id} />
+          ))}
           {turn.status === "error" && turn.error ? (
             renderError ? (
               renderError(turn)
@@ -87,9 +111,10 @@ export function TurnView({ turn, renderError, canCopy }: TurnViewProps) {
               </StatusNotice>
             )
           ) : null}
-          {turn.status === "done" && (showCopy || turn.model) ? (
+          {turn.status === "done" && (showCopy || turn.model || exportable) ? (
             <div className={styles.footer}>
               {showCopy ? <CopyButton text={turn.text} /> : null}
+              {exportable && turn.result ? <ExportMenu turn={{ key: turn.key, charts: turn.charts, result: turn.result }} /> : null}
               {turn.model ? <p className={styles.model}>{turn.model}</p> : null}
             </div>
           ) : null}

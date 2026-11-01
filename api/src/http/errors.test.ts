@@ -31,3 +31,18 @@ test("toStreamError codes and human messages", () => {
     assert.equal(other.code, "internal_error")
     assert.ok(!other.message.includes("secret"))
 })
+
+import { ChartNotFoundError, ExportBusyError, ExportTimeoutError, ExportTooLargeError, FileNotFoundError, NothingToExportError, ResultNotFoundError } from "../domain/errors.ts"
+
+test("export errors map to status and code without internal details", () => {
+    const m = (e: Error) => { const r = toHttpError(e, "r"); return [r.status, r.body.error] }
+    assert.deepEqual(m(new ResultNotFoundError()), [404, "result_not_found"])
+    assert.deepEqual(m(new ChartNotFoundError()), [404, "chart_not_found"])
+    assert.deepEqual(m(new FileNotFoundError()), [404, "file_not_found"])
+    assert.deepEqual(m(new ExportTooLargeError(9, 5)), [413, "export_too_large"])
+    assert.deepEqual(m(new NothingToExportError()), [422, "nothing_to_export"])
+    assert.deepEqual(m(new ExportBusyError(3)), [429, "export_busy"])
+    assert.deepEqual(m(new ExportTimeoutError()), [504, "export_timeout"])
+    assert.equal(toHttpError(new ExportBusyError(3), "r").body.retryAfterSeconds, 3)
+    assert.deepEqual(toHttpError(new ResultNotFoundError(), "r").body, toHttpError(new ResultNotFoundError(), "r").body)
+})

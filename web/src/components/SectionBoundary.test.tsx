@@ -24,3 +24,11 @@ test("uma seção em falha não afeta a irmã", () => {
   assert.match(html, /saudável/);
   assert.doesNotMatch(html, /quebrado/);
 });
+
+test("fallback null: a seção que falha some em silêncio, sem painel de erro", () => {
+  const html = renderToStaticMarkup(<SectionBoundary fallback={null}><p>ok</p></SectionBoundary>);
+  assert.match(html, /ok/);
+  const boundary = new SectionBoundary({ children: null, fallback: null });
+  boundary.state = SectionBoundary.getDerivedStateFromError();
+  assert.equal(boundary.render(), null);
+});

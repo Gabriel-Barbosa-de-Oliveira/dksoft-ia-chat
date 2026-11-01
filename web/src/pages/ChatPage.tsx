@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { ApiClient } from "../api/client.ts";
+import { downloadFile, requestExport, saveBlob } from "../api/exports.ts";
 import { AppShell } from "../components/AppShell.tsx";
 import { Composer } from "../components/Composer.tsx";
 import { ConfirmDialog } from "../components/ConfirmDialog.tsx";
@@ -13,6 +14,7 @@ import { StatusNotice } from "../components/StatusNotice.tsx";
 import { StorageNotice } from "../components/StorageNotice.tsx";
 import { Thread } from "../components/Thread.tsx";
 import { useDraft } from "../hooks/DraftContext.tsx";
+import { ExportContext, type ExportApi } from "../hooks/ExportContext.tsx";
 import { useChat } from "../hooks/useChat.ts";
 import { useConversation } from "../hooks/useConversation.ts";
 import { useConversationList } from "../hooks/useConversationList.ts";
@@ -53,6 +55,20 @@ export function ChatPage({ client, onSignOut, persisted = true }: ChatPageProps)
   const list = useConversationList(client);
   const previews = useConversationPreview(client);
   const [now] = useState(() => Date.now());
+  const exportConversationId = chat.view.conversationId;
+  const dispatchRef = useRef(chat.dispatch);
+  useEffect(() => {
+    dispatchRef.current = chat.dispatch;
+  });
+  const exportApi = useMemo<ExportApi>(
+    () => ({
+      conversationId: exportConversationId,
+      download: async (file) => saveBlob(await downloadFile(client, file), file.name),
+      request: (input) => requestExport(client, { ...input, conversationId: exportConversationId ?? "" }),
+      attach: (key, file) => dispatchRef.current({ type: "ADD_FILE", key, file }),
+    }),
+    [client, exportConversationId],
+  );
   const { draft, setDraft, beginSend, endSend } = useDraft();
   const [pendingTarget, setPendingTarget] = useState<string | null | undefined>(undefined);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -214,6 +230,7 @@ export function ChatPage({ client, onSignOut, persisted = true }: ChatPageProps)
   } else {
     content = (
       <SectionBoundary>
+        <ExportContext.Provider value={exportApi}>
         <Thread
           turns={view.turns}
           renderError={(turn) =>
@@ -227,6 +244,7 @@ export function ChatPage({ client, onSignOut, persisted = true }: ChatPageProps)
             ) : null
           }
         />
+        </ExportContext.Provider>
       </SectionBoundary>
     );
   }
