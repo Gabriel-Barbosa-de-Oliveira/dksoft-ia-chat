@@ -24,6 +24,13 @@ export const SCENARIOS = [
   "server-500",
   "bad-body",
   "list-fail",
+  // spec 004
+  "export",
+  "export-gone",
+  "export-result-gone",
+  "export-busy",
+  "export-too-large",
+  "chart",
 ] as const;
 export type Scenario = (typeof SCENARIOS)[number];
 
@@ -32,12 +39,39 @@ interface StoredMessage {
   role: "user" | "assistant";
   content: string;
   createdAt: string;
+  charts?: unknown[];
 }
 interface Conversation {
   id: string;
   createdAt: string;
   updatedAt: string;
   messages: StoredMessage[];
+}
+
+/** Bytes de teste devolvidos pelo download (o front só os entrega ao navegador). */
+export const FILE_BYTES = Buffer.from("%PDF-1.4 arquivo de teste\n", "utf8");
+
+const uuid = () => randomUUID();
+
+function chartSpec(type: "bar" | "line" | "pie", resultId: string) {
+  const common = { id: uuid(), resultId, partial: false, subtitle: "01/10/2026 a 31/10/2026" };
+  if (type === "bar")
+    return {
+      ...common, type, title: "Recebido por semana", valueKind: "currency", categories: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
+      series: [{ name: "Total recebido", values: [8200.5, 9100, 12300, 7050.25] }],
+      summary: "Gráfico de barras com 4 semanas; maior valor R$ 12.300,00 na Sem 3.",
+    };
+  if (type === "line")
+    return {
+      ...common, type, title: "Matrículas por mês", valueKind: "integer", categories: ["Jul", "Ago", "Set", "Out"],
+      series: [{ name: "Novas", values: [12, 18, 9, 22] }, { name: "Renovações", values: [30, 28, 35, 31] }],
+      summary: "Gráfico de linhas com 2 séries em 4 meses; maior valor 35 em Set (Renovações).",
+    };
+  return {
+    ...common, type, title: "Alunos por pacote", valueKind: "integer", categories: ["Básico", "Intensivo", "Premium"],
+    series: [{ name: "Alunos", values: [40, 25, 15] }],
+    summary: "Gráfico de pizza com 3 pacotes; Básico concentra 50% dos alunos.",
+  };
 }
 
 export interface FakeApi {
@@ -76,6 +110,20 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
   const conversations = new Map<string, Conversation>();
   const requests: FakeApi["requests"] = [];
   let nextMessageId = 1;
+  const files = new Map<string, { conversationId: string }>();
+
+  function newFile(conversationId: string, resultId: string, format: "pdf" | "xlsx" | "docx", minutes = 30) {
+    const id = uuid();
+    files.set(id, { conversationId });
+    const now = Date.now();
+    return {
+      id, conversationId, resultId, name: `contas-recebidas-20261031-213015.${format}`, format,
+      mime: format === "pdf" ? "application/pdf" : "application/octet-stream", sizeBytes: 48211, rowCount: 312,
+      includesChart: false, containsFullPersonalData: false,
+      createdAt: new Date(now).toISOString(), expiresAt: new Date(now + minutes * 60_000).toISOString(),
+      downloadPath: `/conversations/${conversationId}/exports/${id}`,
+    };
+  }
 
   function addConversation(question: string, answer: string, minutesAgo: number): Conversation {
     const at = new Date(Date.now() - minutesAgo * 60_000).toISOString();
@@ -195,7 +243,33 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
       await tokens(parts);
     };
 
+    const charts: unknown[] = [];
+    const resultId = uuid();
+    const sendResult = () =>
+      send("result", { resultId, label: "Contas recebidas, 01/10/2026 a 31/10/2026", rows: 312, totalRows: 312, capped: false, expiresAt: new Date(Date.now() + 3_600_000).toISOString() });
+
     switch (scenario) {
+      case "export":
+      case "export-gone":
+      case "export-result-gone":
+      case "export-busy":
+      case "export-too-large":
+        sendResult();
+        await say(["Encontrei ", "312 ", "registros."]);
+        if (scenario === "export" || scenario === "export-gone" || scenario === "export-result-gone") {
+          send("file", { file: newFile(conversationId, resultId, "pdf") });
+        }
+        break;
+      case "chart":
+        sendResult();
+        for (const type of ["bar", "line", "pie"] as const) {
+          const chart = chartSpec(type, resultId);
+          charts.push(chart);
+          send("chart", { chart });
+          await sleep(delay);
+        }
+        await say(["Veja ", "os ", "gráficos."]);
+        break;
       case "markdown-table":
         await say(TABLE.split("\n").map((l) => `${l}\n`));
         break;
@@ -225,7 +299,7 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
     const now = new Date().toISOString();
     conversation.messages.push(
       { id: nextMessageId++, role: "user", content: body.message.trim(), createdAt: now },
-      { id: nextMessageId++, role: "assistant", content: answer, createdAt: now },
+      { id: nextMessageId++, role: "assistant", content: answer, createdAt: now, ...(charts.length > 0 ? { charts } : {}) },
     );
     conversation.updatedAt = now;
     send("done", { requestId, conversationId, model: "modelo-falso", durationMs: 123, partial: scenario === "partial" });
@@ -278,6 +352,31 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
         }
 
         if (url.pathname === "/chat" && req.method === "POST") return await handleChat(req, res);
+
+        const download = /^\/conversations\/([^/]+)\/exports\/([^/]+)$/.exec(url.pathname);
+        if (download && req.method === "GET") {
+          const found = files.get(download[2]!);
+          if (scenario === "export-gone" || scenario === "export-result-gone" || !found || found.conversationId !== download[1]) {
+            return err(req, res, 404, "file_not_found");
+          }
+          res.writeHead(200, {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": 'attachment; filename="contas.pdf"',
+            "Content-Length": FILE_BYTES.byteLength,
+            "Cache-Control": "no-store",
+            ...cors(req),
+          });
+          return res.end(FILE_BYTES);
+        }
+
+        if (url.pathname === "/exports" && req.method === "POST") {
+          const body = (await readBody(req)) as { conversationId?: string; resultId?: string; format?: "pdf" | "xlsx" | "docx"; chartId?: string } | null;
+          if (!body?.conversationId || !body.resultId || !body.format) return err(req, res, 400, "invalid_body");
+          if (scenario === "export-result-gone") return err(req, res, 404, "result_not_found");
+          if (scenario === "export-busy") return err(req, res, 429, "export_busy", { retryAfterSeconds: 3 });
+          if (scenario === "export-too-large") return err(req, res, 413, "export_too_large", { rows: 7000, maxRows: 5000 });
+          return json(req, res, 201, { requestId: uuid(), file: { ...newFile(body.conversationId, body.resultId, body.format), includesChart: Boolean(body.chartId) } });
+        }
 
         return err(req, res, 404, "conversation_not_found");
       } catch {
