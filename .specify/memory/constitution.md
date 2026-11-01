@@ -1,6 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: (nova) → 1.0.0
+- Version change: 1.0.0 → 1.1.0 (MINOR, proposta pela spec 004; aguarda aprovação humana antes do merge)
+- Origem da 1.1.0: spec 004 (exportação de arquivos e gráficos). Racional: gerar PDF, Word, Excel
+  e imagens de gráfico exige bibliotecas fora da stack fechada; resultados e arquivos vivem só em
+  memória, com expiração, para não persistir dados pessoais de alunos em disco.
+- Seção afetada: Stack Tecnológica Obrigatória (backend).
+- Versão anterior: (nova) → 1.0.0
 - Origem: adaptada da constitution do OpsPilot (unipds-ia, módulo 04) para o dksoft-ia-chat.
 - Diferenças em relação à origem:
   - Servidor HTTP: Fastify (no lugar de Express).
@@ -93,6 +98,12 @@ aberto para multi-cliente.
 - LangChain/LangGraph (1.x) sobre OpenRouter para o agente, com modelo de reserva configurável
 - MCP (`@modelcontextprotocol/sdk`) em `mcp/` expondo a API DKSOFT; o agente consome essas tools
   via `@langchain/mcp-adapters`
+- Geração de arquivos no backend (spec 004): `pdfmake` (PDF), `docx` (Word), `write-excel-file`
+  (Excel) e `@resvg/resvg-js` (SVG → PNG dos gráficos incluídos nos arquivos), com fontes Archivo
+  (OFL) embarcadas em `api/assets/fonts/`; a geração roda em `worker_threads`, fora do laço
+  principal
+- Resultados de consulta e arquivos exportados vivem somente em memória, com expiração; nunca em
+  disco nem no banco
 
 ### Frontend (`web/`)
 
@@ -131,4 +142,4 @@ princípio (ex.: IO dentro do domínio, entrada não validada, ausência de test
 justificada explicitamente na PR ou corrigida antes do merge. O uso do dia a dia é guiado por
 `CLAUDE.md`, que deve permanecer consistente com esta constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-30
+**Version**: 1.1.0 | **Ratified**: 2026-10-30 | **Last Amended**: 2026-10-31

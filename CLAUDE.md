@@ -19,6 +19,7 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 - Fastify como servidor HTTP, streaming por SSE
 - SQLite via `node:sqlite` (`DatabaseSync`); `:memory:` em testes
 - LangChain/LangGraph 1.x sobre OpenRouter, com modelo de reserva
+- Arquivos (spec 004): `pdfmake`, `docx`, `write-excel-file`, `@resvg/resvg-js`; fontes em `api/assets/fonts/`; geração em `worker_threads`; resultados e arquivos só em memória, com expiração
 - Frontend em `web/` (Vite + React + TS), pacote npm separado — design em `.github/instructions/design.instructions.md`
 
 ## Comandos
