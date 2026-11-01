@@ -7,7 +7,7 @@ Fatos do repositório que ancoram as decisões (lidos em 31/10/2026):
 - O modelo **não vê os registros brutos**: `shapeResultsMiddleware` corta cada resultado de tool em `TOOL_RESULT_MAX_ROWS` (40) linhas e remove CPF, e-mail e telefone dos resultados `list_*`. Um arquivo com todos os registros precisa dos dados brutos, guardados no servidor.
 - O histórico do agente é só texto (`ChatTurn`: pessoa e assistente). Os resultados das tools de turnos anteriores **não voltam ao modelo**.
 - O backend roda em **uma única máquina** do Fly.io (`shared-cpu-1x`, 1 GB), imagem `node:24-bookworm-slim` (glibc, sem fontes de sistema), com volume `/data` só para o SQLite.
-- `web/` valida tudo com zod, tem `lib/events.ts` espelhando `api/src/domain/events.ts`, e hoje **rejeita** evento SSE desconhecido.
+- `web/` valida tudo com zod, tem `lib/events.ts` espelhando `api/src/domain/events.ts`, e **já ignora** evento SSE desconhecido (`parseStreamFrame` devolve `"ignored"`), mas valida com zod os eventos que conhece.
 - Os pacotes `api/` e `web/` são separados e duplicam contratos de propósito (padrão já usado em `events.ts`).
 
 ## Decisão 1: de onde vêm os dados do arquivo
@@ -96,8 +96,8 @@ Verificado no registro do npm em 31/10/2026:
 
 ## Decisão 13: novos eventos SSE e compatibilidade entre deploys
 
-- **Decision**: três eventos novos e aditivos: `result` (um resultado ficou disponível para exportar), `chart` (especificação de gráfico) e `file` (arquivo pronto). O front passa a **ignorar eventos desconhecidos** (hoje rejeita), o que vira a **primeira tarefa** do front. Ordem de deploy: front tolerante primeiro (Vercel), depois a API (Fly).
-- **Rationale**: API (Fly) e front (Vercel) são publicados separadamente; sem essa tolerância, uma API nova quebraria um front antigo durante a janela entre os deploys. FR-026 exige que nada mude para quem não usa as novas capacidades.
+- **Decision**: três eventos novos e aditivos: `result` (um resultado ficou disponível para exportar), `chart` (especificação de gráfico) e `file` (arquivo pronto). O front **já ignora eventos desconhecidos** (confirmado em `web/src/lib/events.ts`), então a ordem de publicação entre Vercel e Fly é livre; uma tarefa acrescenta só um teste de regressão que trava esse comportamento.
+- **Rationale**: API (Fly) e front (Vercel) são publicados separadamente; como o front já descarta o que não conhece, uma API nova não quebra um front antigo durante a janela entre os deploys (ele só não mostra os controles novos). FR-026 exige que nada mude para quem não usa as novas capacidades.
 
 ## Decisão 14: exportação pelo botão sem passar pelo modelo
 

@@ -56,7 +56,7 @@ O objeto `file` segue o `FileDescriptor` do [data-model](../data-model.md) (seç
 
 ## Compatibilidade entre versões (obrigatória)
 
-O front de `web/` hoje rejeita evento desconhecido. Antes de publicar a API com estes eventos, o front deve **ignorar** eventos que não conhece (com aviso só em modo de desenvolvimento). Ordem de deploy: front tolerante (Vercel) → API nova (Fly). O contrato também vale ao contrário: front novo com API antiga simplesmente não recebe os eventos e não mostra controles.
+O front de `web/` já **ignora** evento que não conhece (`parseStreamFrame` devolve `"ignored"`); um teste de regressão trava isso. Portanto API nova com front antigo funciona (o front só não mostra os controles novos), e front novo com API antiga simplesmente não recebe os eventos. A ordem de publicação entre Vercel e Fly é livre.
 
 ## Esquema zod (espelhado em `api/src/domain/events.ts` e `web/src/lib/events.ts`)
 

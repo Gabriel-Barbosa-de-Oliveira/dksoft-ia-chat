@@ -139,7 +139,7 @@ web/
 │   ├── api/exports.ts                 + POST /exports e download autenticado por Blob
 │   ├── hooks/useExport.ts             + estado do pedido e do cartão
 │   ├── lib/
-│   │   ├── events.ts                  ~ novos eventos; ignora desconhecidos
+│   │   ├── events.ts                  ~ novos eventos (desconhecidos continuam ignorados)
 │   │   ├── chart-spec.ts  chart-layout.ts  chart-a11y.ts  chart-palette.ts  format-value.ts   + 
 │   │   ├── export-state.ts            + máquina de estados do cartão
 │   │   ├── chat-reducer.ts            ~ result, charts, files; histórico com charts
@@ -199,7 +199,7 @@ Cada fase é publicável e reversível por si só; a ordem respeita as dependên
 
 | Fase | Conteúdo | Depende de |
 |------|----------|-----------|
-| 0. Fundação | Emenda da constitution (aprovação humana); front **ignora eventos desconhecidos** (publicar primeiro); dependências, fontes e `Dockerfile`; configuração e `ARTIFACTS_ENABLED`; teste mínimo do artefato de tool (R1) e do worker/resvg na imagem (R2) | — |
+| 0. Fundação | Emenda da constitution (aprovação humana); teste de regressão que trava o comportamento do front de **ignorar eventos desconhecidos** (já existe); dependências, fontes e `Dockerfile`; configuração e `ARTIFACTS_ENABLED`; teste mínimo do artefato de tool (R1) e do worker/resvg na imagem (R2) | — |
 | 1. Captura de resultados | `extract-rows`, `memory-result-store`, `resultId` no resumo, evento `result`, `resultados_disponiveis` | 0 |
 | 2. US1 Arquivo por pedido | `export-table`, dicionário de colunas, máscara, `full-pii-request`, renderizadores PDF/Word/Excel no worker, `memory-file-store`, `export.service`, tool `exportar_arquivo`, evento `file`, rota de download, `FileCard` | 1 |
 | 3. US2 Gráficos | `chart-spec`, `chart-request`, `build-chart`, `chart.service`, tool `gerar_grafico`, evento `chart`, persistência no histórico, `ChartView` com acessibilidade e temas | 1 |

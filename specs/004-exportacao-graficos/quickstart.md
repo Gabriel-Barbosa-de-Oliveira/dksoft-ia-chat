@@ -106,7 +106,7 @@ Com `ARTIFACTS_ENABLED=false`: nenhuma rota nova responde (`404 not_found`), nen
 
 ## 9. Ordem de publicação
 
-1. Publicar o **front** tolerante a eventos desconhecidos (Vercel).
-2. Publicar a **API** (Fly), `fly deploy` com `ARTIFACTS_ENABLED=true`. Mantém uma máquina (resultados e arquivos vivem em memória).
+1. Publicar a **API** (Fly), `fly deploy` com `ARTIFACTS_ENABLED=true`. Mantém uma máquina (resultados e arquivos vivem em memória).
+2. Publicar o **front** (Vercel). A ordem entre os dois é livre: o front já ignora eventos desconhecidos.
 3. Validar o roteiro das seções 3 e 5 em produção com token de escola de teste.
 4. Reversão rápida: `fly secrets set ARTIFACTS_ENABLED=false` (reinicia a máquina e desliga a feature sem novo deploy).
