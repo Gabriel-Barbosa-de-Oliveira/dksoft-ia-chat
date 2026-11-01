@@ -54,12 +54,22 @@ export const ApiErrorCodeSchema = z.enum([
   "conversation_not_found",
   "rate_limited",
   "internal_error",
+  // spec 004 (exportação e download)
+  "result_not_found",
+  "file_not_found",
+  "chart_not_found",
+  "export_too_large",
+  "nothing_to_export",
+  "export_busy",
+  "export_timeout",
 ]);
 export const ApiErrorBodySchema = z.object({
   requestId: z.string(),
   error: ApiErrorCodeSchema,
   retryAfterSeconds: z.number().optional(),
   conversationId: z.string().optional(),
+  rows: z.number().optional(),
+  maxRows: z.number().optional(),
 });
 export type ApiErrorBody = z.infer<typeof ApiErrorBodySchema>;
 

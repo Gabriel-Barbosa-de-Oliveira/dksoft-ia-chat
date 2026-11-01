@@ -67,3 +67,16 @@ test("erro mostra título e mensagem e mantém o texto parcial", () => {
   assert.match(html, /parcial/);
   assert.match(html, /role="alert"/);
 });
+
+const U = "6f1c0d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f";
+const fileOf = (name: string) => ({
+  id: crypto.randomUUID(), conversationId: U, resultId: U, name, format: "pdf" as const, mime: "application/pdf", sizeBytes: 1000, rowCount: 3,
+  includesChart: false, containsFullPersonalData: false, createdAt: "2026-10-31T21:30:15.000Z", expiresAt: "2099-10-31T22:00:15.000Z", downloadPath: "/p",
+});
+
+test("spec 004: turno sem arquivos renderiza como antes; com 2 arquivos, 2 cartões na ordem", () => {
+  assert.doesNotMatch(render(turn()), /aria-label="Arquivo /);
+  const html = render(turn({ files: [fileOf("a.pdf"), fileOf("b.pdf")] }));
+  assert.equal((html.match(/aria-label="Arquivo /g) ?? []).length, 2);
+  assert.ok(html.indexOf("a.pdf") < html.indexOf("b.pdf"));
+});
