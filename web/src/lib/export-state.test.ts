@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fileExpiry, formatClock, formatSize, initialFileState, nextFileState, type FileCardState } from "./export-state.ts";
+import { chartOfResult, fileExpiry, formatClock, formatSize, initialFileState, nextFileState, type FileCardState } from "./export-state.ts";
 import { toUserError } from "./errors.ts";
 
 const err = toUserError({ source: "network" });
@@ -80,4 +80,18 @@ test("canExport: só em turno concluído com resultado vivo (histórico, erro e 
   assert.equal(canExport({ status: "interrupted", result }, now), false);
   assert.equal(canExport({ status: "streaming", result }, now), false);
   assert.equal(canExport({ status: "done", result }, Date.parse("2026-10-31T22:00:00.000Z")), false);
+});
+
+const A = "11111111-1111-4111-8111-111111111111";
+const B = "22222222-2222-4222-8222-222222222222";
+
+test("chartOfResult: pega o gráfico mais recente do próprio resultado", () => {
+  const charts = [{ id: "a1", resultId: A }, { id: "b1", resultId: B }, { id: "a2", resultId: A }, { id: "b2", resultId: B }];
+  assert.equal(chartOfResult(charts, A)?.id, "a2");
+  assert.equal(chartOfResult(charts, B)?.id, "b2");
+});
+
+test("chartOfResult: gráfico de outro resultado não serve (o backend responderia chart_not_found)", () => {
+  assert.equal(chartOfResult([{ id: "a1", resultId: A }], B), undefined);
+  assert.equal(chartOfResult([], A), undefined);
 });

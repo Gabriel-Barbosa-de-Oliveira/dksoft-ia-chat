@@ -5,6 +5,7 @@ import { useExportApi, type ExportApi } from "../hooks/ExportContext.tsx";
 import { useExport, type ExportRequestState } from "../hooks/useExport.ts";
 import type { Turn } from "../lib/chat-reducer.ts";
 import { deadlineFrom, remainingSeconds, shouldAnnounce } from "../lib/countdown.ts";
+import { chartOfResult } from "../lib/export-state.ts";
 import type { FileFormat } from "../lib/file-descriptor.ts";
 import { menuKeyAction } from "../lib/menu-nav.ts";
 import { ErrorPanel } from "./ErrorPanel.tsx";
@@ -44,8 +45,8 @@ export function ExportMenu({ turn, api: apiProp, initialState, initialOpen = fal
   const button = useRef<HTMLButtonElement>(null);
   const items = useRef<Array<HTMLElement | null>>([]);
   const root = useRef<HTMLDivElement>(null);
-  const hasChart = turn.charts.length > 0;
-  const chartId = turn.charts.at(-1)?.id ?? null;
+  const chartId = chartOfResult(turn.charts, turn.result.resultId)?.id ?? null;
+  const hasChart = chartId !== null;
   const error = state.status === "error" ? state.error : null;
   const gone = error?.kind === "result_not_found";
   const generating = state.status === "generating";

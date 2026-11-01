@@ -94,6 +94,11 @@ export function resultLive(result: { expiresAt: string } | null, now: number): R
   return { live: now < deadline, secondsLeft };
 }
 
+/** Gráfico mais recente do resultado; um turno pode ter gráficos de outras consultas, que o backend recusa (`chart_not_found`). */
+export function chartOfResult<T extends { resultId: string }>(charts: readonly T[], resultId: string): T | undefined {
+  return charts.filter((c) => c.resultId === resultId).at(-1);
+}
+
 /** O botão "Exportar" só existe em resposta concluída desta sessão, com resultado vivo. */
 export function canExport(turn: { status: string; result: { expiresAt: string } | null }, now: number): boolean {
   return turn.status === "done" && resultLive(turn.result, now).live;
