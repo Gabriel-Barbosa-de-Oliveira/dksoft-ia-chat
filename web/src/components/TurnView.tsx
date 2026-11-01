@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Copy, LoaderCircle } from "lucide-react";
 import { useAnnouncer } from "../hooks/useAnnouncer.ts";
-import { canExport, resultLive } from "../lib/export-state.ts";
+import { canExport, chartOfResult, resultLive } from "../lib/export-state.ts";
 import type { Turn } from "../lib/chat-reducer.ts";
 import { ChartView } from "./ChartView.tsx";
 import { ExportMenu } from "./ExportMenu.tsx";
@@ -100,7 +100,7 @@ export function TurnView({ turn, renderError, canCopy }: TurnViewProps) {
             <ChartView key={chart.id} chart={chart} />
           ))}
           {turn.files.map((file) => (
-            <FileCard key={file.id} file={file} chartId={turn.charts[0]?.id} />
+            <FileCard key={file.id} file={file} chartId={chartOfResult(turn.charts, file.resultId)?.id} />
           ))}
           {turn.status === "error" && turn.error ? (
             renderError ? (

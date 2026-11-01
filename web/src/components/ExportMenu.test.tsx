@@ -65,3 +65,9 @@ test("fila ocupada bloqueia o botão e mostra a contagem", () => {
   assert.match(html, /aria-disabled="true"/);
   assert.match(html, /Há outras exportações em andamento\. Tente de novo em 7 segundos\./);
 });
+
+test("gráfico de outro resultado do turno não vira 'Incluir gráfico'", () => {
+  const other = { ...chart, resultId: "22222222-2222-4222-8222-222222222222" };
+  const html = render({ initialOpen: true }, [other]);
+  assert.doesNotMatch(html, /Incluir gráfico/);
+});
