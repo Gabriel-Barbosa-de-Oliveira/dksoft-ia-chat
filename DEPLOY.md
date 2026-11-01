@@ -37,6 +37,11 @@ Notas:
 - `CHAT_CORS_ORIGINS` precisa ser **exatamente** a origem do front (com `https://`, sem barra final). Mais de uma, separadas por vírgula.
 - `BASE_URL`, `PORT`, `CHAT_DB` e `TRUST_PROXY` já estão em `fly.toml`.
 - Mantenha **uma máquina**: o SQLite fica no volume e não é compartilhado entre máquinas. Não rode `fly scale count 2`.
+- **Resultados e arquivos exportados vivem só em memória** (expiram em 1 h e 30 min). Por isso **uma máquina é obrigatória**: com duas, o arquivo gerado numa não existe na outra. Reiniciar a máquina descarta tudo o que estava vivo (a pessoa só refaz o pedido).
+- Variáveis da exportação (padrões em `api/.env.example`): `ARTIFACTS_ENABLED`, `RESULT_TTL_MS`, `RESULT_MAX_ROWS`, `RESULT_STORE_MAX_MB`, `EXPORT_TTL_MS`, `EXPORT_MAX_ROWS`, `EXPORT_TIMEOUT_MS`, `EXPORT_MAX_CONCURRENCY`, `FILE_STORE_MAX_MB`, `EXPORT_RATE_LIMIT_PER_MIN`. Para mudar: `fly secrets set EXPORT_MAX_ROWS=3000`.
+- **Reversão rápida** da feature: `fly secrets set ARTIFACTS_ENABLED=false` (reinicia a máquina; sem novo deploy). Com `false` não existe rota, tool nem evento novo.
+- **Ordem de publicação livre**: o front ignora eventos que não conhece, e a API nova funciona com front antigo (só não aparecem os controles novos).
+- **Memória**: o pico medido em geração de 5.000 linhas foi ~480 MB (veja `specs/004-exportacao-graficos/perf-notes.md`); a máquina de 1 GB comporta `EXPORT_MAX_CONCURRENCY=2`. Acompanhe com `fly status` após uma rodada de exportações.
 - O container roda como root para conseguir escrever no volume montado.
 - Logs: `fly logs`. Máquina: `fly status`.
 
@@ -56,7 +61,8 @@ Notas:
 2. Abra o front, informe uma chave errada ("Chave incorreta") e depois a certa.
 3. Pergunte "Quais pacotes estão disponíveis?" e confira os avisos de consulta e o texto em streaming.
 4. Recarregue em `/c/<uuid>` e confira que o histórico reabre.
-5. `curl -N https://SEU-APP.fly.dev/chat -H "Authorization: Bearer $CHAT_ACCESS_KEY" -H "content-type: application/json" -d '{"message":"ping"}'` mostra eventos SSE sem buffer.
+5. Exportação: faça uma consulta com dados, clique em **Exportar → Excel** e baixe o cartão. Confira que não aparece CPF/e-mail/telefone completos e que `fly logs` não mostra nomes de arquivo nem dados pessoais.
+6. `curl -N https://SEU-APP.fly.dev/chat -H "Authorization: Bearer $CHAT_ACCESS_KEY" -H "content-type: application/json" -d '{"message":"ping"}'` mostra eventos SSE sem buffer.
 
 ## Cuidados da demo
 

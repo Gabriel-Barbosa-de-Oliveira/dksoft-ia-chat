@@ -6,6 +6,7 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 
 - `mcp/` — servidor MCP (stdio) que expõe a API DKSOFT como tools; já existe, com token no `.env`
 - `api/` — backend do agente (Fastify + LangGraph + SSE), spec 001; camadas `http/` → `services/` → `store/` e `agent/`, `domain/` puro; testes ao lado do código
+  - spec 004: `render/` (PDF/Excel/Word/PNG em `worker_threads`), `assets/fonts/` (Archivo), tools de artefato em `agent/artifact-tools.ts` (`resultados_disponiveis`, `gerar_grafico`, `exportar_arquivo`), `scripts/bench-export.ts` (medição, fora do `src/`)
 - `web/` — front do chat (Vite + React + TS), spec 002; camadas `components → hooks → (api, storage) → lib`, `lib` puro; testes ao lado do código
 - `data/` — contrato da API (`openapi.json`, `api-types.ts`)
 - `specs/` — specs, planos e tarefas do Spec Kit
@@ -26,6 +27,7 @@ Chat de IA para consultar a API DKSOFT (alunos, pacotes, contas a receber e cont
 
 - `npm --prefix mcp test` · `npm --prefix api test` · `npm --prefix api run typecheck`
 - `npm --prefix api run dev` (lê `api/.env`; variáveis em `api/.env.example`)
+- `node --expose-gc --import tsx api/scripts/bench-export.ts` (desempenho da exportação; números em `specs/004-exportacao-graficos/perf-notes.md`)
 - `npm --prefix web run dev` · `typecheck` · `lint` · `test` · `build` · `test:e2e` (E2E usa servidor falso do contrato 001; ver `specs/002-chat-web-ui/quickstart.md`)
 
 ## Convenções
