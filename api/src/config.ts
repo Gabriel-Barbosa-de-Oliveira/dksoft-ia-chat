@@ -23,6 +23,7 @@ const EnvSchema = z.object({
     TOOL_RESULT_MAX_ROWS: int(1).default(40),
     CHAT_RATE_LIMIT_PER_MIN: int(1).default(30),
     MCP_ENTRY: z.string().default("../mcp/src/index.ts"),
+    TRUST_PROXY: z.enum(["true", "false"]).default("false"),
 })
 
 export type AppConfig = {
@@ -42,6 +43,7 @@ export type AppConfig = {
     toolResultMaxRows: number
     chatRateLimitPerMin: number
     mcpEntry: string
+    trustProxy: boolean
 }
 
 // pure: validates the environment and never echoes secret values in errors
@@ -70,5 +72,6 @@ export function loadConfig(env: Record<string, string | undefined>): AppConfig {
         toolResultMaxRows: e.TOOL_RESULT_MAX_ROWS,
         chatRateLimitPerMin: e.CHAT_RATE_LIMIT_PER_MIN,
         mcpEntry: e.MCP_ENTRY,
+        trustProxy: e.TRUST_PROXY === "true",
     }
 }
