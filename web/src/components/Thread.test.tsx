@@ -5,7 +5,7 @@ import { Thread } from "./Thread.tsx";
 import type { Turn } from "../lib/chat-reducer.ts";
 
 const turn = (key: string): Turn => ({
-  key, question: `P ${key}`, status: "done", tools: [], text: `R ${key}`, partial: false, error: null, requestId: null, model: null,
+  key, question: `P ${key}`, status: "done", tools: [], text: `R ${key}`, partial: false, error: null, requestId: null, model: null, result: null, charts: [], files: [],
 });
 
 test("renderiza um turno por item, em ordem, dentro de um log nomeado", () => {

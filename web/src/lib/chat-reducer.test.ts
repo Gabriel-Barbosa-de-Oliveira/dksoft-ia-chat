@@ -195,3 +195,38 @@ test("a conversa existente continua a mesma depois de descartar o erro", () => {
   const v = run([send, meta, { type: "ERROR", error }, { type: "DISCARD_ERROR_TURN", key: "k1" }]);
   assert.equal(v.conversationId, "c1");
 });
+
+const UID = "6f1c0d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f";
+const chart = {
+  id: UID, type: "bar" as const, title: "Recebido", valueKind: "currency" as const, categories: ["a"],
+  series: [{ name: "s", values: [1] }], summary: "r", resultId: UID, partial: false,
+};
+const notice = { resultId: UID, label: "Contas", rows: 2, totalRows: 2, capped: false, expiresAt: "2026-10-31T22:00:00.000Z" };
+
+test("spec 004: RESULT, CHART e FILE entram no turno ativo; gráfico repetido não duplica", () => {
+  let v = chatReducer(initialView, { type: "SEND", question: "q", key: "k" });
+  v = chatReducer(v, { type: "RESULT", result: notice });
+  v = chatReducer(v, { type: "CHART", chart });
+  v = chatReducer(v, { type: "CHART", chart });
+  assert.equal(v.turns[0]!.result?.resultId, UID);
+  assert.equal(v.turns[0]!.charts.length, 1);
+  const file = { id: UID, conversationId: UID, resultId: UID, name: "a.xlsx", format: "xlsx" as const, mime: "m", sizeBytes: 1, rowCount: 2, includesChart: false, containsFullPersonalData: false, createdAt: "x", expiresAt: "y", downloadPath: "/p" };
+  v = chatReducer(v, { type: "FILE", file });
+  assert.equal(v.turns[0]!.files[0]!.name, "a.xlsx");
+});
+
+test("spec 004: eventos de artefato depois do estado terminal são descartados", () => {
+  let v = chatReducer(initialView, { type: "SEND", question: "q", key: "k" });
+  v = chatReducer(v, { type: "DONE", requestId: "r", model: null, partial: false });
+  assert.equal(chatReducer(v, { type: "CHART", chart }), v);
+});
+
+test("spec 004: histórico traz gráficos mas nunca resultado nem arquivos", () => {
+  const turns = messagesToTurns([
+    { id: 1, role: "user", content: "q", createdAt: "t" },
+    { id: 2, role: "assistant", content: "a", createdAt: "t", charts: [chart] },
+  ]);
+  assert.equal(turns[0]!.charts.length, 1);
+  assert.equal(turns[0]!.result, null);
+  assert.deepEqual(turns[0]!.files, []);
+});

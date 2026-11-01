@@ -7,7 +7,7 @@ import { toUserError } from "../lib/errors.ts";
 
 const turn = (over: Partial<Turn> = {}): Turn => ({
   key: "k", question: "Quais pacotes?", status: "done", tools: [], text: "**Resposta**", partial: false,
-  error: null, requestId: null, model: null, ...over,
+  error: null, requestId: null, model: null, result: null, charts: [], files: [], ...over,
 });
 const render = (t: Turn, canCopy = true) => renderToStaticMarkup(<TurnView turn={t} canCopy={canCopy} />);
 

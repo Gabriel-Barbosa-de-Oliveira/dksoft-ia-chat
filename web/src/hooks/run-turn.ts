@@ -76,6 +76,23 @@ export async function runTurn(deps: RunTurnDeps): Promise<RunTurnResult> {
             });
           }
           break;
+        case "result":
+          flush();
+          {
+            const { event: _name, ...result } = event;
+            dispatch({ type: "RESULT", result });
+          }
+          break;
+        case "chart":
+          flush();
+          dispatch({ type: "CHART", chart: event.chart });
+          announcer.announce(`Gráfico exibido: ${event.chart.title}.`);
+          break;
+        case "file":
+          flush();
+          dispatch({ type: "FILE", file: event.file });
+          announcer.announce(`Arquivo pronto: ${event.file.name}.`);
+          break;
         case "done":
           flush();
           dispatch({ type: "DONE", requestId: event.requestId, model: event.model, partial: event.partial });

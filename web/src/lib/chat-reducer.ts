@@ -1,5 +1,7 @@
 import type { UserError } from "./errors.ts";
-import type { ChatMessage } from "./events.ts";
+import type { ChartSpec } from "./chart-spec.ts";
+import type { ChatMessage, ResultNotice } from "./events.ts";
+import type { FileDescriptor } from "./file-descriptor.ts";
 
 export type TurnStatus = "pending" | "working" | "streaming" | "done" | "error" | "interrupted";
 export type ToolPhase = "running" | "ok" | "failed";
@@ -20,6 +22,10 @@ export interface Turn {
   error: UserError | null;
   requestId: string | null;
   model: string | null;
+  /** Resultado vivo da última consulta (só no turno desta sessão; nunca vem do histórico). */
+  result: ResultNotice | null;
+  charts: ChartSpec[];
+  files: FileDescriptor[];
 }
 
 export type ConversationPhase = "empty" | "loading" | "ready" | "not-found" | "error";
@@ -36,6 +42,9 @@ export type ChatAction =
   | { type: "META"; requestId: string; conversationId: string }
   | { type: "TOOL_START"; name: string; label: string }
   | { type: "TOOL_END"; name: string; label: string; ok: boolean }
+  | { type: "RESULT"; result: ResultNotice }
+  | { type: "CHART"; chart: ChartSpec }
+  | { type: "FILE"; file: FileDescriptor }
   | { type: "TOKENS"; text: string }
   | { type: "DONE"; requestId: string; model: string | null; partial: boolean }
   | { type: "ERROR"; error: UserError }
@@ -83,6 +92,9 @@ function newTurn(question: string, key: string): Turn {
     error: null,
     requestId: null,
     model: null,
+    result: null,
+    charts: [],
+    files: [],
   };
 }
 
@@ -102,6 +114,7 @@ export function messagesToTurns(messages: readonly ChatMessage[]): Turn[] {
       ...newTurn(user.content, `h-${user.id}`),
       status: "done",
       text: assistant?.content ?? "",
+      charts: assistant?.charts ?? [],
     });
   for (const message of messages) {
     if (message.role === "user") {
@@ -141,6 +154,12 @@ export function chatReducer(view: ConversationView, action: ChatAction): Convers
         status: t.status === "pending" ? "working" : t.status,
         tools: closeTool(t.tools, action.name, action.label, action.ok),
       }));
+    case "RESULT":
+      return updateLast(view, (t) => ({ ...t, result: action.result }));
+    case "CHART":
+      return updateLast(view, (t) => ({ ...t, charts: [...t.charts.filter((c) => c.id !== action.chart.id), action.chart] }));
+    case "FILE":
+      return updateLast(view, (t) => ({ ...t, files: [...t.files.filter((f) => f.id !== action.file.id), action.file] }));
     case "TOKENS":
       if (action.text === "") return view;
       return updateLast(view, (t) => ({ ...t, status: "streaming", text: t.text + action.text }));

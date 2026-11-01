@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ApiErrorBodySchema, ConversationPageSchema, MessagesResponseSchema, parseStreamFrame } from "./events.ts";
+import { ApiErrorBodySchema, ChatMessageSchema, ConversationPageSchema, MessagesResponseSchema, parseStreamFrame } from "./events.ts";
 import { UnexpectedResponseError } from "./failures.ts";
 import { conversationsFull, conversationsShort, httpErrors, messages } from "./__fixtures__/http.ts";
 import { REQUEST_ID, doneData } from "./__fixtures__/stream.ts";
@@ -51,4 +51,30 @@ test("corpos de erro HTTP, listas e mensagens", () => {
   assert.ok(ConversationPageSchema.safeParse(conversationsShort).success);
   assert.ok(MessagesResponseSchema.safeParse(messages).success);
   assert.equal(ConversationPageSchema.safeParse({ conversations: [{ id: "x" }], limit: 1, offset: 0 }).success, false);
+});
+
+const U = "6f1c0d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f";
+const chartSpec = {
+  id: U, type: "bar", title: "Recebido", valueKind: "currency", categories: ["a"],
+  series: [{ name: "s", values: [1] }], summary: "r", resultId: U, partial: false,
+};
+
+test("spec 004: result, chart e file são eventos conhecidos e validados", () => {
+  const result = { resultId: U, label: "Contas", rows: 3, totalRows: 3, capped: false, expiresAt: "2026-10-31T22:00:00.000Z" };
+  assert.deepEqual(parseStreamFrame(f("result", result)), { event: "result", ...result });
+  assert.equal((parseStreamFrame(f("chart", { chart: chartSpec })) as { event: string }).event, "chart");
+  assert.throws(() => parseStreamFrame(f("result", { ...result, rows: 0 })), UnexpectedResponseError);
+  assert.throws(() => parseStreamFrame(f("chart", { chart: { ...chartSpec, type: "radar" } })), UnexpectedResponseError);
+  assert.throws(() => parseStreamFrame(f("file", { file: {} })), UnexpectedResponseError);
+});
+
+test("spec 004: eventos futuros continuam ignorados (compatibilidade)", () => {
+  assert.equal(parseStreamFrame(f("export_progress", { pct: 10 })), "ignored");
+});
+
+test("spec 004: mensagem aceita charts opcional", () => {
+  const base = { id: 1, role: "assistant", content: "x", createdAt: "2026-10-31T00:00:00Z" };
+  assert.ok(ChatMessageSchema.safeParse(base).success);
+  assert.ok(ChatMessageSchema.safeParse({ ...base, charts: [chartSpec] }).success);
+  assert.ok(!ChatMessageSchema.safeParse({ ...base, charts: [{ ...chartSpec, id: "x" }] }).success);
 });
