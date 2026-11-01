@@ -114,7 +114,9 @@ export function FileCard({ file, chartId, api: apiProp, now: nowProp, initialSta
         ) : null}
         {regenError && state.kind === "expired" ? (
           <p className={styles.notice} role="alert">
-            {regenError.message}
+            {regenError.kind === "result_not_found"
+              ? "Os dados dessa consulta não estão mais disponíveis. Refaça a pergunta e exporte em seguida."
+              : regenError.message}
             {regenError.supportCode ? <span className={styles.code}> Código de suporte: {regenError.supportCode}</span> : null}
           </p>
         ) : null}

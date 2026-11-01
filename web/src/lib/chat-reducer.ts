@@ -45,6 +45,8 @@ export type ChatAction =
   | { type: "RESULT"; result: ResultNotice }
   | { type: "CHART"; chart: ChartSpec }
   | { type: "FILE"; file: FileDescriptor }
+  /** Arquivo pedido pelo botão depois do `done`: entra no turno pela chave, mesmo já concluído. */
+  | { type: "ADD_FILE"; key: string; file: FileDescriptor }
   | { type: "TOKENS"; text: string }
   | { type: "DONE"; requestId: string; model: string | null; partial: boolean }
   | { type: "ERROR"; error: UserError }
@@ -160,6 +162,13 @@ export function chatReducer(view: ConversationView, action: ChatAction): Convers
       return updateLast(view, (t) => ({ ...t, charts: [...t.charts.filter((c) => c.id !== action.chart.id), action.chart] }));
     case "FILE":
       return updateLast(view, (t) => ({ ...t, files: [...t.files.filter((f) => f.id !== action.file.id), action.file] }));
+    case "ADD_FILE": {
+      const index = view.turns.findIndex((t) => t.key === action.key);
+      if (index === -1) return view;
+      const turn = view.turns[index]!;
+      if (turn.files.some((f) => f.id === action.file.id)) return view;
+      return { ...view, turns: view.turns.map((t, i) => (i === index ? { ...turn, files: [...turn.files, action.file] } : t)) };
+    }
     case "TOKENS":
       if (action.text === "") return view;
       return updateLast(view, (t) => ({ ...t, status: "streaming", text: t.text + action.text }));

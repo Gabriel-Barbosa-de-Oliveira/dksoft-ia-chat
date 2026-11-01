@@ -9,6 +9,8 @@ export interface ExportApi {
   download(file: FileDescriptor): Promise<void>;
   /** Pede um arquivo novo (sempre mascarado). Lança `ApiFailure` em caso de falha. */
   request(input: Omit<ExportRequestInput, "conversationId">): Promise<FileDescriptor>;
+  /** Coloca o arquivo gerado pelo botão no turno de origem. */
+  attach(turnKey: string, file: FileDescriptor): void;
 }
 
 export const ExportContext = createContext<ExportApi | null>(null);

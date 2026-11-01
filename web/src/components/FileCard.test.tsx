@@ -12,7 +12,7 @@ const file: FileDescriptor = {
   mime: "application/octet-stream", sizeBytes: 48211, rowCount: 312, includesChart: false, containsFullPersonalData: false,
   createdAt: "2026-10-31T21:30:15.000Z", expiresAt: "2026-10-31T22:00:15.000Z", downloadPath: `/conversations/${U}/exports/${U}`,
 };
-const api: ExportApi = { conversationId: U, download: async () => {}, request: async () => file };
+const api: ExportApi = { conversationId: U, download: async () => {}, request: async () => file, attach: () => {} };
 const NOW = Date.parse("2026-10-31T21:30:20.000Z");
 const render = (over: Partial<Parameters<typeof FileCard>[0]> = {}) =>
   renderToStaticMarkup(<FileCard file={file} api={api} now={NOW} {...over} />);

@@ -93,3 +93,13 @@ test("spec 004: ordem texto → gráficos → arquivos; turno de histórico most
   assert.doesNotMatch(render(turn()), /<figure/);
   assert.match(render(turn({ charts: [chartOf("Do histórico")] })), /Do histórico/);
 });
+
+const liveResult = { resultId: U, label: "Contas", rows: 3, totalRows: 3, capped: false, expiresAt: "2099-01-01T00:00:00.000Z" };
+
+test("spec 004: 'Exportar' só em resposta concluída com resultado vivo", () => {
+  assert.match(render(turn({ result: liveResult })), />Exportar</);
+  assert.doesNotMatch(render(turn()), />Exportar</, "sem resultado (histórico)");
+  assert.doesNotMatch(render(turn({ result: { ...liveResult, expiresAt: "2000-01-01T00:00:00.000Z" } })), />Exportar</, "vencido");
+  assert.doesNotMatch(render(turn({ result: liveResult, status: "error", error: toUserError({ source: "network" }) })), />Exportar</);
+  assert.doesNotMatch(render(turn({ result: liveResult, status: "streaming" })), />Exportar</);
+});

@@ -59,3 +59,25 @@ test("regeneração: sucesso volta a ready, falha volta a expirado", () => {
   assert.equal(run(regen, { type: "REGEN_FAIL" }).kind, "expired");
   assert.equal(run(initialFileState, { type: "READY" }), initialFileState);
 });
+
+import { canExport, resultLive } from "./export-state.ts";
+
+test("resultLive: vivo até o prazo exato; sem resultado ou data ruim não é vivo", () => {
+  const result = { expiresAt: "2026-10-31T22:00:00.000Z" };
+  const at = (iso: string) => Date.parse(iso);
+  assert.deepEqual(resultLive(result, at("2026-10-31T21:59:59.000Z")), { live: true, secondsLeft: 1 });
+  assert.deepEqual(resultLive(result, at("2026-10-31T22:00:00.000Z")), { live: false, secondsLeft: 0 });
+  assert.equal(resultLive(null, 0).live, false);
+  assert.equal(resultLive({ expiresAt: "lixo" }, 0).live, false);
+});
+
+test("canExport: só em turno concluído com resultado vivo (histórico, erro e interrupção ficam de fora)", () => {
+  const result = { expiresAt: "2026-10-31T22:00:00.000Z" };
+  const now = Date.parse("2026-10-31T21:00:00.000Z");
+  assert.equal(canExport({ status: "done", result }, now), true);
+  assert.equal(canExport({ status: "done", result: null }, now), false, "histórico não tem resultado");
+  assert.equal(canExport({ status: "error", result }, now), false);
+  assert.equal(canExport({ status: "interrupted", result }, now), false);
+  assert.equal(canExport({ status: "streaming", result }, now), false);
+  assert.equal(canExport({ status: "done", result }, Date.parse("2026-10-31T22:00:00.000Z")), false);
+});

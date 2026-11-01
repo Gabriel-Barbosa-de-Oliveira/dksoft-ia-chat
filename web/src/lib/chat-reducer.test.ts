@@ -230,3 +230,13 @@ test("spec 004: histórico traz gráficos mas nunca resultado nem arquivos", () 
   assert.equal(turns[0]!.result, null);
   assert.deepEqual(turns[0]!.files, []);
 });
+
+test("spec 004: ADD_FILE entra em turno concluído pela chave, sem duplicar; chave desconhecida é ignorada", () => {
+  let v = chatReducer(initialView, { type: "SEND", question: "q", key: "k" });
+  v = chatReducer(v, { type: "DONE", requestId: "r", model: null, partial: false });
+  const file = { id: UID, conversationId: UID, resultId: UID, name: "a.xlsx", format: "xlsx" as const, mime: "m", sizeBytes: 1, rowCount: 2, includesChart: false, containsFullPersonalData: false, createdAt: "x", expiresAt: "y", downloadPath: "/p" };
+  const once = chatReducer(v, { type: "ADD_FILE", key: "k", file });
+  assert.equal(once.turns[0]!.files.length, 1);
+  assert.equal(chatReducer(once, { type: "ADD_FILE", key: "k", file }), once);
+  assert.equal(chatReducer(v, { type: "ADD_FILE", key: "outra", file }), v);
+});

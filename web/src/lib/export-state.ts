@@ -79,3 +79,22 @@ export function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
 }
+
+export interface ResultLife {
+  live: boolean;
+  secondsLeft: number;
+}
+
+/** O resultado da consulta ainda pode ser exportado? (`now` em ms; o relógio é do chamador.) */
+export function resultLive(result: { expiresAt: string } | null, now: number): ResultLife {
+  if (!result) return { live: false, secondsLeft: 0 };
+  const deadline = Date.parse(result.expiresAt);
+  if (Number.isNaN(deadline)) return { live: false, secondsLeft: 0 };
+  const secondsLeft = remainingSeconds(now, deadline);
+  return { live: now < deadline, secondsLeft };
+}
+
+/** O botão "Exportar" só existe em resposta concluída desta sessão, com resultado vivo. */
+export function canExport(turn: { status: string; result: { expiresAt: string } | null }, now: number): boolean {
+  return turn.status === "done" && resultLive(turn.result, now).live;
+}

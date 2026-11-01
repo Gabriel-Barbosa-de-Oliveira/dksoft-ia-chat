@@ -31,6 +31,10 @@ export const SCENARIOS = [
   "export-busy",
   "export-too-large",
   "chart",
+  "result-only",
+  "result-chart",
+  "export-timeout",
+  "file-short",
 ] as const;
 export type Scenario = (typeof SCENARIOS)[number];
 
@@ -254,12 +258,27 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
       case "export-result-gone":
       case "export-busy":
       case "export-too-large":
+      case "export-timeout":
+      case "result-only":
         sendResult();
         await say(["Encontrei ", "312 ", "registros."]);
         if (scenario === "export" || scenario === "export-gone" || scenario === "export-result-gone") {
           send("file", { file: newFile(conversationId, resultId, "pdf") });
         }
         break;
+      case "file-short":
+        sendResult();
+        await say(["Arquivo ", "de ", "validade curta."]);
+        send("file", { file: newFile(conversationId, resultId, "pdf", 0.05) });
+        break;
+      case "result-chart": {
+        sendResult();
+        const chart = chartSpec("bar", resultId);
+        charts.push(chart);
+        send("chart", { chart });
+        await say(["Veja ", "o ", "gráfico."]);
+        break;
+      }
       case "chart":
         sendResult();
         for (const type of ["bar", "line", "pie"] as const) {
@@ -373,6 +392,7 @@ export async function startFakeApi(options: { port?: number; scenario?: Scenario
           const body = (await readBody(req)) as { conversationId?: string; resultId?: string; format?: "pdf" | "xlsx" | "docx"; chartId?: string } | null;
           if (!body?.conversationId || !body.resultId || !body.format) return err(req, res, 400, "invalid_body");
           if (scenario === "export-result-gone") return err(req, res, 404, "result_not_found");
+          if (scenario === "export-timeout") return err(req, res, 504, "export_timeout");
           if (scenario === "export-busy") return err(req, res, 429, "export_busy", { retryAfterSeconds: 3 });
           if (scenario === "export-too-large") return err(req, res, 413, "export_too_large", { rows: 7000, maxRows: 5000 });
           return json(req, res, 201, { requestId: uuid(), file: { ...newFile(body.conversationId, body.resultId, body.format), includesChart: Boolean(body.chartId) } });

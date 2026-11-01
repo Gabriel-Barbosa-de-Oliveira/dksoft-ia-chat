@@ -56,11 +56,16 @@ export function ChatPage({ client, onSignOut, persisted = true }: ChatPageProps)
   const previews = useConversationPreview(client);
   const [now] = useState(() => Date.now());
   const exportConversationId = chat.view.conversationId;
+  const dispatchRef = useRef(chat.dispatch);
+  useEffect(() => {
+    dispatchRef.current = chat.dispatch;
+  });
   const exportApi = useMemo<ExportApi>(
     () => ({
       conversationId: exportConversationId,
       download: async (file) => saveBlob(await downloadFile(client, file), file.name),
       request: (input) => requestExport(client, { ...input, conversationId: exportConversationId ?? "" }),
+      attach: (key, file) => dispatchRef.current({ type: "ADD_FILE", key, file }),
     }),
     [client, exportConversationId],
   );
